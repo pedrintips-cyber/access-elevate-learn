@@ -1,7 +1,9 @@
 import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const menuItems = [
   { icon: Bell, label: "Notificações", path: "/settings/notifications" },
@@ -15,25 +17,53 @@ const communityLinks = [
     icon: MessageCircle,
     title: "WhatsApp",
     color: "from-green-500 to-green-600",
-    url: "#",
+    url: "#", // Substituir pelo link real
   },
   {
     icon: Headphones,
     title: "Discord",
     color: "from-indigo-500 to-purple-600",
-    url: "#",
+    url: "#", // Substituir pelo link real
   },
 ];
 
 const ProfilePage = () => {
-  const isLoggedIn = false;
-  const isVIP = false;
+  const { user, profile, isVIP, isLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Você saiu da conta");
+    navigate("/");
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="page-container">
+          <div className="content-container">
+            <div className="animate-pulse space-y-6">
+              <div className="glass-card p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-muted" />
+                  <div className="flex-1">
+                    <div className="h-5 bg-muted rounded w-32 mb-2" />
+                    <div className="h-4 bg-muted rounded w-48" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="page-container">
         <div className="content-container">
-          {!isLoggedIn ? (
+          {!user ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -102,13 +132,23 @@ const ProfilePage = () => {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl" />
                 <div className="relative flex items-center gap-4">
                   <div className="w-18 h-18 rounded-full bg-gradient-to-br from-primary to-warning flex items-center justify-center p-1">
-                    <div className="w-full h-full rounded-full bg-card flex items-center justify-center">
-                      <User className="w-8 h-8 text-foreground" />
+                    <div className="w-full h-full rounded-full bg-card flex items-center justify-center w-16 h-16">
+                      {profile?.avatar_url ? (
+                        <img 
+                          src={profile.avatar_url} 
+                          alt="Avatar" 
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-8 h-8 text-foreground" />
+                      )}
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h1 className="font-display text-xl font-bold">João Silva</h1>
-                    <p className="text-sm text-muted-foreground">joao@email.com</p>
+                    <h1 className="font-display text-xl font-bold">
+                      {profile?.full_name || 'Usuário'}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
                     <div className="flex items-center gap-2 mt-2">
                       {isVIP ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-primary text-xs font-semibold rounded-full">
@@ -206,6 +246,7 @@ const ProfilePage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
+                onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 p-4 text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
               >
                 <LogOut className="w-5 h-5" />
