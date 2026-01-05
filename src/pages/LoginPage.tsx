@@ -1,27 +1,48 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, Crown } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+
     setIsLoading(true);
     
-    // TODO: Implement actual login with Supabase
-    setTimeout(() => {
-      toast.info("Sistema de login será configurado com Lovable Cloud");
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      if (error.message.includes("Invalid login credentials")) {
+        toast.error("E-mail ou senha incorretos");
+      } else if (error.message.includes("Email not confirmed")) {
+        toast.error("Confirme seu e-mail antes de fazer login");
+      } else {
+        toast.error("Erro ao fazer login. Tente novamente.");
+      }
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+    
+    toast.success("Login realizado com sucesso!");
+    navigate("/");
+    setIsLoading(false);
   };
 
   return (

@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          order_index: number | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          order_index?: number | null
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          order_index?: number | null
+          type?: string
+        }
+        Relationships: []
+      }
+      lesson_progress: {
+        Row: {
+          completed: boolean | null
+          id: string
+          last_watched_at: string | null
+          lesson_id: string | null
+          progress_percent: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          last_watched_at?: string | null
+          lesson_id?: string | null
+          progress_percent?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          last_watched_at?: string | null
+          lesson_id?: string | null
+          progress_percent?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          category_id: string | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          is_published: boolean | null
+          order_index: number | null
+          thumbnail_url: string | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          is_vip: boolean | null
+          updated_at: string | null
+          vip_expires_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_vip?: boolean | null
+          updated_at?: string | null
+          vip_expires_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_vip?: boolean | null
+          updated_at?: string | null
+          vip_expires_at?: string | null
+        }
+        Relationships: []
+      }
+      tools: {
+        Row: {
+          category_id: string | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          external_url: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_published: boolean | null
+          order_index: number | null
+          title: string
+          type: string
+        }
+        Insert: {
+          category_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          external_url?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          title: string
+          type: string
+        }
+        Update: {
+          category_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          external_url?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tools_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

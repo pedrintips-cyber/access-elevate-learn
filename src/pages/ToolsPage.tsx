@@ -1,66 +1,42 @@
-import { Wrench, Lock, Crown, Download, FileText, Code, Sparkles, ArrowRight } from "lucide-react";
+import { Wrench, Lock, Crown, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { ToolCard } from "@/components/ui/ToolCard";
+import { CategoryCard } from "@/components/ui/CategoryCard";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
-const tools = [
-  {
-    id: "1",
-    title: "Script de Prospecção 1.0",
-    description: "Modelo pronto para abordar leads frios com alta conversão.",
-    type: "script" as const,
-    content: "Olá [NOME], tudo bem?\n\nVi que você [CONTEXTO] e isso me chamou atenção porque...",
-  },
-  {
-    id: "2",
-    title: "Template de Follow-up",
-    description: "Sequência de mensagens para manter o lead engajado.",
-    type: "script" as const,
-    content: "Dia 1: [MENSAGEM INICIAL]\nDia 3: [SEGUNDO CONTATO]\nDia 7: [OFERTA]...",
-  },
-  {
-    id: "3",
-    title: "Planilha de Controle",
-    description: "Organize seus leads e acompanhe resultados.",
-    type: "file" as const,
-    fileUrl: "#",
-    fileType: ".xlsx",
-  },
-  {
-    id: "4",
-    title: "Pack de Artes para Stories",
-    description: "Templates editáveis para aumentar engajamento.",
-    type: "file" as const,
-    fileUrl: "#",
-    fileType: ".zip",
-  },
-  {
-    id: "5",
-    title: "Grupo VIP no Telegram",
-    description: "Acesso à comunidade exclusiva de membros.",
-    type: "link" as const,
-    externalUrl: "https://t.me",
-  },
-  {
-    id: "6",
-    title: "Suporte via WhatsApp",
-    description: "Tire dúvidas diretamente com nossa equipe.",
-    type: "link" as const,
-    externalUrl: "https://wa.me",
-  },
-];
-
-const previewTools = [
-  { title: "Script de Prospecção", type: "Script" },
-  { title: "Template de Follow-up", type: "Script" },
-  { title: "Planilha de Controle", type: "Arquivo" },
-  { title: "Pack de Artes", type: "Arquivo" },
-  { title: "Grupo VIP", type: "Link" },
-];
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  type: string;
+  order_index: number;
+}
 
 const ToolsPage = () => {
-  const isVIP = false;
+  const { isVIP } = useAuth();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('type', 'tools')
+        .order('order_index');
+
+      if (!error && data) {
+        setCategories(data);
+      }
+      setLoading(false);
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <Layout>
@@ -115,96 +91,68 @@ const ToolsPage = () => {
                 </div>
               </motion.div>
 
-              {/* Preview Cards */}
+              {/* Preview Categories */}
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
-                  O que você vai receber:
+                  Categorias disponíveis:
                 </p>
-                {previewTools.map((tool, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.08 }}
-                    className="glass-card p-4 flex items-center gap-4 opacity-60"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                      <Lock className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{tool.title}</p>
-                      <p className="text-xs text-muted-foreground">{tool.type}</p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                  </motion.div>
-                ))}
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="glass-card p-4 animate-pulse opacity-60">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-2xl bg-muted" />
+                          <div className="flex-1">
+                            <div className="h-4 bg-muted rounded w-32 mb-2" />
+                            <div className="h-3 bg-muted rounded w-48" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  categories.map((category, index) => (
+                    <motion.div
+                      key={category.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.08 }}
+                    >
+                      <CategoryCard {...category} isLocked />
+                    </motion.div>
+                  ))
+                )}
               </div>
             </>
           ) : (
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Code className="w-5 h-5 text-primary" />
-                  <h2 className="font-semibold">Scripts e Templates</h2>
+            <div className="space-y-4">
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="glass-card p-4 animate-pulse">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-muted" />
+                        <div className="flex-1">
+                          <div className="h-4 bg-muted rounded w-32 mb-2" />
+                          <div className="h-3 bg-muted rounded w-48" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-3">
-                  {tools
-                    .filter((t) => t.type === "script")
-                    .map((tool, index) => (
-                      <motion.div
-                        key={tool.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <ToolCard {...tool} />
-                      </motion.div>
-                    ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Download className="w-5 h-5 text-primary" />
-                  <h2 className="font-semibold">Arquivos para Download</h2>
-                </div>
-                <div className="space-y-3">
-                  {tools
-                    .filter((t) => t.type === "file")
-                    .map((tool, index) => (
-                      <motion.div
-                        key={tool.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <ToolCard {...tool} />
-                      </motion.div>
-                    ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <h2 className="font-semibold">Links Úteis</h2>
-                </div>
-                <div className="space-y-3">
-                  {tools
-                    .filter((t) => t.type === "link")
-                    .map((tool, index) => (
-                      <motion.div
-                        key={tool.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <ToolCard {...tool} />
-                      </motion.div>
-                    ))}
-                </div>
-              </div>
+              ) : (
+                categories.map((category, index) => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                  >
+                    <CategoryCard {...category} />
+                  </motion.div>
+                ))
+              )}
             </div>
           )}
         </div>

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Crown } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const RegisterPage = () => {
   const [name, setName] = useState("");
@@ -13,16 +14,43 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name || !email || !password) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error("A senha deve ter pelo menos 8 caracteres");
+      return;
+    }
+
     setIsLoading(true);
     
-    // TODO: Implement actual registration with Supabase
-    setTimeout(() => {
-      toast.info("Sistema de registro será configurado com Lovable Cloud");
+    const { error } = await signUp(email, password, name);
+    
+    if (error) {
+      if (error.message.includes("User already registered")) {
+        toast.error("Este e-mail já está cadastrado");
+      } else if (error.message.includes("Invalid email")) {
+        toast.error("E-mail inválido");
+      } else if (error.message.includes("Password should be at least")) {
+        toast.error("A senha deve ter pelo menos 6 caracteres");
+      } else {
+        toast.error("Erro ao criar conta. Tente novamente.");
+      }
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+    
+    toast.success("Conta criada com sucesso!");
+    navigate("/");
+    setIsLoading(false);
   };
 
   return (
