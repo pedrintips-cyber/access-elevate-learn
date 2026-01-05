@@ -1,7 +1,8 @@
-import { Menu, X, Crown } from "lucide-react";
+import { Menu, X, Crown, Shield } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { label: "Home", path: "/" },
@@ -14,6 +15,7 @@ const menuItems = [
 export const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   return (
     <>
@@ -83,6 +85,20 @@ export const Header = () => {
                     {item.label}
                   </Link>
                 ))}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
+                      location.pathname.startsWith("/admin")
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Painel Admin
+                  </Link>
+                )}
               </nav>
 
               <div className="absolute bottom-8 left-6 right-6">
