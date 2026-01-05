@@ -14,10 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Fredoka', 'Comic Neue', 'cursive', 'sans-serif'],
-        display: ['Bangers', 'Fredoka', 'cursive'],
-        heading: ['Bangers', 'cursive'],
-        body: ['Fredoka', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Sora', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -63,14 +61,6 @@ export default {
         },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
-        cartoon: {
-          purple: "hsl(var(--cartoon-purple))",
-          orange: "hsl(var(--cartoon-orange))",
-          pink: "hsl(var(--cartoon-pink))",
-          teal: "hsl(var(--cartoon-teal))",
-          yellow: "hsl(var(--cartoon-yellow))",
-          lime: "hsl(var(--cartoon-lime))",
-        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -84,15 +74,11 @@ export default {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 4px)",
-        sm: "calc(var(--radius) - 8px)",
-        xl: "1.5rem",
-        "2xl": "2rem",
-        "3xl": "2.5rem",
-      },
-      borderWidth: {
-        '3': '3px',
-        '4': '4px',
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+        xl: "1rem",
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
       },
       keyframes: {
         "accordion-down": {
@@ -104,33 +90,16 @@ export default {
           to: { height: "0" },
         },
         "fade-in": {
-          from: { opacity: "0", transform: "translateY(15px)" },
+          from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "slide-up": {
-          from: { opacity: "0", transform: "translateY(25px)" },
+          from: { opacity: "0", transform: "translateY(20px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
-          from: { opacity: "0", transform: "scale(0.9)" },
+          from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
-        },
-        "bounce-cartoon": {
-          "0%, 100%": { transform: "translateY(0) scale(1)" },
-          "50%": { transform: "translateY(-20px) scale(1.08)" },
-        },
-        "wiggle": {
-          "0%, 100%": { transform: "rotate(-4deg)" },
-          "50%": { transform: "rotate(4deg)" },
-        },
-        "pop": {
-          "0%": { transform: "scale(0.6)", opacity: "0" },
-          "60%": { transform: "scale(1.1)" },
-          "100%": { transform: "scale(1)", opacity: "1" },
-        },
-        "spin-slow": {
-          from: { transform: "rotate(0deg)" },
-          to: { transform: "rotate(360deg)" },
         },
       },
       animation: {
@@ -139,19 +108,10 @@ export default {
         "fade-in": "fade-in 0.5s ease-out forwards",
         "slide-up": "slide-up 0.6s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
-        "bounce-cartoon": "bounce-cartoon 0.7s ease infinite",
-        "wiggle": "wiggle 0.4s ease-in-out infinite",
-        "pop": "pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        "spin-slow": "spin-slow 8s linear infinite",
       },
       boxShadow: {
-        'cartoon': '5px 5px 0px hsl(240, 25%, 10%)',
-        'cartoon-lg': '8px 8px 0px hsl(240, 25%, 10%)',
-        'cartoon-sm': '3px 3px 0px hsl(240, 25%, 10%)',
-        'cartoon-xl': '12px 12px 0px hsl(240, 25%, 10%)',
-        'glow-gold': '0 0 40px hsla(45, 95%, 52%, 0.5)',
-        'glow-accent': '0 0 40px hsla(200, 95%, 50%, 0.5)',
-        'glow-pink': '0 0 40px hsla(340, 90%, 55%, 0.5)',
+        'glow-gold': '0 0 30px hsla(45, 93%, 47%, 0.3)',
+        'glow-accent': '0 0 30px hsla(199, 89%, 48%, 0.3)',
       },
     },
   },
