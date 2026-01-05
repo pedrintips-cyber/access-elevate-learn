@@ -1,4 +1,4 @@
-import { Wrench, Lock, Crown, Download, FileText, Code } from "lucide-react";
+import { Wrench, Lock, Crown, Download, FileText, Code, Sparkles, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -51,8 +51,16 @@ const tools = [
   },
 ];
 
+const previewTools = [
+  { title: "Script de Prospecção", type: "Script" },
+  { title: "Template de Follow-up", type: "Script" },
+  { title: "Planilha de Controle", type: "Arquivo" },
+  { title: "Pack de Artes", type: "Arquivo" },
+  { title: "Grupo VIP", type: "Link" },
+];
+
 const ToolsPage = () => {
-  const isVIP = false; // TODO: Check from auth
+  const isVIP = false;
 
   return (
     <Layout>
@@ -64,13 +72,13 @@ const ToolsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-warning/20 flex items-center justify-center">
-                <Wrench className="w-6 h-6 text-primary" />
+            <div className="flex items-center gap-4 mb-2">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-warning/30 flex items-center justify-center shadow-glow-gold">
+                <Wrench className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <h1 className="font-display text-2xl font-bold">Ferramentas</h1>
-                <p className="text-sm text-muted-foreground">Scripts e materiais exclusivos</p>
+                <h1 className="font-display text-2xl md:text-3xl font-bold">Ferramentas</h1>
+                <p className="text-muted-foreground">Scripts e materiais exclusivos</p>
               </div>
             </div>
           </motion.div>
@@ -81,92 +89,122 @@ const ToolsPage = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-8 text-center mb-8"
+                className="glass-card p-8 md:p-10 text-center mb-8 relative overflow-hidden"
               >
-                <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-10 h-10 text-muted-foreground" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-warning/5" />
+                <div className="relative">
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6"
+                  >
+                    <Lock className="w-10 h-10 text-muted-foreground" />
+                  </motion.div>
+                  <h2 className="font-display text-2xl font-bold mb-3">
+                    Conteúdo Exclusivo VIP
+                  </h2>
+                  <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+                    Scripts, templates, planilhas e acesso à comunidade. Tudo para acelerar seus resultados.
+                  </p>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/vip" className="btn-vip inline-flex items-center gap-2">
+                      <Crown className="w-5 h-5" />
+                      Desbloquear Acesso
+                    </Link>
+                  </motion.div>
                 </div>
-                <h2 className="font-display text-xl font-bold mb-2">
-                  Conteúdo Exclusivo VIP
-                </h2>
-                <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
-                  Scripts, templates, planilhas e acesso à comunidade. Tudo para acelerar seus resultados.
-                </p>
-                <Link to="/vip" className="btn-vip inline-flex items-center gap-2">
-                  <Crown className="w-5 h-5" />
-                  Desbloquear Acesso
-                </Link>
               </motion.div>
 
-              {/* Preview Cards (blurred) */}
-              <div className="space-y-4 relative">
-                <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-background/50 to-background pointer-events-none" />
-                {tools.slice(0, 3).map((tool, index) => (
+              {/* Preview Cards */}
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  O que você vai receber:
+                </p>
+                {previewTools.map((tool, index) => (
                   <motion.div
-                    key={tool.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="blur-sm pointer-events-none"
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                    className="glass-card p-4 flex items-center gap-4 opacity-60"
                   >
-                    <ToolCard {...tool} />
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{tool.title}</p>
+                      <p className="text-xs text-muted-foreground">{tool.type}</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-muted-foreground" />
                   </motion.div>
                 ))}
               </div>
             </>
           ) : (
-            /* VIP User View */
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Code className="w-5 h-5 text-primary" />
-                <h2 className="font-semibold">Scripts e Templates</h2>
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Code className="w-5 h-5 text-primary" />
+                  <h2 className="font-semibold">Scripts e Templates</h2>
+                </div>
+                <div className="space-y-3">
+                  {tools
+                    .filter((t) => t.type === "script")
+                    .map((tool, index) => (
+                      <motion.div
+                        key={tool.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <ToolCard {...tool} />
+                      </motion.div>
+                    ))}
+                </div>
               </div>
-              {tools
-                .filter((t) => t.type === "script")
-                .map((tool, index) => (
-                  <motion.div
-                    key={tool.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <ToolCard {...tool} />
-                  </motion.div>
-                ))}
 
-              <div className="flex items-center gap-2 mb-4 mt-8">
-                <Download className="w-5 h-5 text-primary" />
-                <h2 className="font-semibold">Arquivos para Download</h2>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Download className="w-5 h-5 text-primary" />
+                  <h2 className="font-semibold">Arquivos para Download</h2>
+                </div>
+                <div className="space-y-3">
+                  {tools
+                    .filter((t) => t.type === "file")
+                    .map((tool, index) => (
+                      <motion.div
+                        key={tool.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <ToolCard {...tool} />
+                      </motion.div>
+                    ))}
+                </div>
               </div>
-              {tools
-                .filter((t) => t.type === "file")
-                .map((tool, index) => (
-                  <motion.div
-                    key={tool.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <ToolCard {...tool} />
-                  </motion.div>
-                ))}
 
-              <div className="flex items-center gap-2 mb-4 mt-8">
-                <FileText className="w-5 h-5 text-primary" />
-                <h2 className="font-semibold">Links Úteis</h2>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h2 className="font-semibold">Links Úteis</h2>
+                </div>
+                <div className="space-y-3">
+                  {tools
+                    .filter((t) => t.type === "link")
+                    .map((tool, index) => (
+                      <motion.div
+                        key={tool.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <ToolCard {...tool} />
+                      </motion.div>
+                    ))}
+                </div>
               </div>
-              {tools
-                .filter((t) => t.type === "link")
-                .map((tool, index) => (
-                  <motion.div
-                    key={tool.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <ToolCard {...tool} />
-                  </motion.div>
-                ))}
             </div>
           )}
         </div>

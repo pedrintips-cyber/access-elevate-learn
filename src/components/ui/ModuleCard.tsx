@@ -25,60 +25,71 @@ export const ModuleCard = ({
 }: ModuleCardProps) => {
   const progress = lessonsCount > 0 ? (completedLessons / lessonsCount) * 100 : 0;
 
+  const thumbnails = [
+    "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=200&fit=crop",
+  ];
+
+  const moduleThumbnail = thumbnail || thumbnails[(number - 1) % thumbnails.length];
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      whileHover={!isLocked ? { y: -4 } : undefined}
+      transition={{ type: "spring", stiffness: 300 }}
     >
       <Link
         to={isLocked ? "#" : `/vip/module/${id}`}
-        className={`module-card block ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
+        className={`module-card block ${isLocked ? "opacity-70 cursor-not-allowed" : ""}`}
       >
-        <div className="relative h-32 overflow-hidden">
-          {thumbnail ? (
-            <img
-              src={thumbnail}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-              <Play className="w-10 h-10 text-primary/50" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+        <div className="relative h-36 overflow-hidden">
+          <img
+            src={moduleThumbnail}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
           
           <div className="absolute top-3 left-3">
-            <span className="px-2.5 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-lg">
+            <span className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg shadow-lg">
               Módulo {number}
             </span>
           </div>
 
           {isLocked && (
             <div className="absolute top-3 right-3">
-              <div className="p-2 bg-background/80 rounded-lg">
+              <div className="p-2.5 bg-background/90 rounded-xl backdrop-blur-sm">
                 <Lock className="w-4 h-4 text-primary" />
+              </div>
+            </div>
+          )}
+
+          {!isLocked && (
+            <div className="absolute bottom-3 right-3">
+              <div className="p-2.5 bg-primary rounded-xl shadow-glow-gold">
+                <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-4">
-          <h3 className="font-display font-semibold text-lg text-foreground mb-1">
+        <div className="p-5">
+          <h3 className="font-display font-semibold text-lg text-foreground mb-1.5">
             {title}
           </h3>
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
             {description}
           </p>
 
           <div className="flex items-center justify-between">
             <div className="flex-1 mr-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                 <span>{completedLessons}/{lessonsCount} aulas</span>
-                <span>{Math.round(progress)}%</span>
+                <span className="font-medium">{Math.round(progress)}%</span>
               </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
