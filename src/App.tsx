@@ -23,6 +23,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminLessons from "./pages/admin/AdminLessons";
 import AdminTools from "./pages/admin/AdminTools";
+import AdminPosts from "./pages/admin/AdminPosts";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import FeedPage from "./pages/FeedPage";
@@ -59,6 +61,8 @@ const App = () => (
             <Route path="/admin/categories" element={<AdminCategories />} />
             <Route path="/admin/lessons" element={<AdminLessons />} />
             <Route path="/admin/tools" element={<AdminTools />} />
+            <Route path="/admin/posts" element={<AdminPosts />} />
+            <Route path="/admin/feedback" element={<AdminFeedback />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="*" element={<NotFound />} />

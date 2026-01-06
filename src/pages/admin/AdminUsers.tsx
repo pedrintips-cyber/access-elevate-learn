@@ -37,6 +37,8 @@ export default function AdminUsers() {
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [vipDays, setVipDays] = useState(30);
+  const [userIdInput, setUserIdInput] = useState("");
+  const [quickVipDays, setQuickVipDays] = useState(30);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -79,7 +81,8 @@ export default function AdminUsers() {
     const searchLower = search.toLowerCase();
     return (
       user.email?.toLowerCase().includes(searchLower) ||
-      user.full_name?.toLowerCase().includes(searchLower)
+      user.full_name?.toLowerCase().includes(searchLower) ||
+      user.id.toLowerCase().includes(searchLower)
     );
   });
 
@@ -101,6 +104,13 @@ export default function AdminUsers() {
     }
   };
 
+  const handleQuickVip = () => {
+    if (userIdInput.trim()) {
+      updateVipMutation.mutate({ userId: userIdInput.trim(), isVip: true, days: quickVipDays });
+      setUserIdInput("");
+    }
+  };
+
   return (
     <AdminLayout title="Usuários">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -110,12 +120,52 @@ export default function AdminUsers() {
         <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar usuário..."
+            placeholder="Buscar por nome, email ou ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
+      </div>
+
+      {/* Quick VIP by ID */}
+      <div className="glass-card p-4 mb-6 border border-primary/20">
+        <div className="flex items-center gap-2 mb-3">
+          <Crown className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold">Dar VIP por ID</h3>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Input
+            placeholder="Cole o ID do usuário aqui..."
+            value={userIdInput}
+            onChange={(e) => setUserIdInput(e.target.value)}
+            className="flex-1 font-mono text-sm"
+          />
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={quickVipDays}
+              onChange={(e) => setQuickVipDays(parseInt(e.target.value) || 30)}
+              className="w-20"
+            />
+            <span className="text-sm text-muted-foreground">dias</span>
+          </div>
+          <Button
+            onClick={handleQuickVip}
+            disabled={!userIdInput.trim() || updateVipMutation.isPending}
+            className="gap-2"
+          >
+            {updateVipMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Shield className="w-4 h-4" />
+            )}
+            Ativar VIP
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Use esta opção para dar VIP rapidamente a um usuário que comprou via WhatsApp
+        </p>
       </div>
 
       {isLoading ? (
@@ -155,6 +205,7 @@ export default function AdminUsers() {
                         <div>
                           <p className="font-medium">{user.full_name || "Sem nome"}</p>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="text-xs text-muted-foreground font-mono">ID: {user.id.slice(0, 8)}...</p>
                         </div>
                       </div>
                     </td>
@@ -229,6 +280,7 @@ export default function AdminUsers() {
                 <div>
                   <p className="font-semibold text-lg">{selectedUser.full_name || "Sem nome"}</p>
                   <p className="text-muted-foreground">{selectedUser.email}</p>
+                  <p className="text-xs text-muted-foreground font-mono mt-1">ID: {selectedUser.id}</p>
                 </div>
               </div>
 

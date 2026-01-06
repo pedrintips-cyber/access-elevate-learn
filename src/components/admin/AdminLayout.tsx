@@ -10,7 +10,9 @@ import {
   Settings,
   ArrowLeft,
   Crown,
-  Loader2
+  Loader2,
+  MessageSquare,
+  MessageCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -24,6 +26,8 @@ const menuItems = [
   { label: "Categorias", path: "/admin/categories", icon: FolderOpen },
   { label: "Aulas", path: "/admin/lessons", icon: Video },
   { label: "Ferramentas", path: "/admin/tools", icon: Wrench },
+  { label: "Posts", path: "/admin/posts", icon: MessageSquare },
+  { label: "Feedback", path: "/admin/feedback", icon: MessageCircle },
   { label: "Usuários", path: "/admin/users", icon: Users },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
@@ -67,7 +71,7 @@ export const AdminLayout = ({ children, title }: AdminLayoutProps) => {
           </Link>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -123,7 +127,7 @@ export const AdminLayout = ({ children, title }: AdminLayoutProps) => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6"
+            className="p-6 pb-24 md:pb-6"
           >
             {children}
           </motion.div>
@@ -132,8 +136,8 @@ export const AdminLayout = ({ children, title }: AdminLayoutProps) => {
 
       {/* Mobile Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border md:hidden">
-        <div className="flex justify-around py-2">
-          {menuItems.slice(0, 5).map((item) => {
+        <div className="flex justify-around py-2 overflow-x-auto">
+          {menuItems.slice(0, 6).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             
@@ -141,12 +145,12 @@ export const AdminLayout = ({ children, title }: AdminLayoutProps) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+                className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors min-w-[60px] ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-xs">{item.label.slice(0, 6)}</span>
+                <span className="text-[10px]">{item.label.slice(0, 5)}</span>
               </Link>
             );
           })}
