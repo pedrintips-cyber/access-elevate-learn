@@ -14,19 +14,21 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, user, isAdmin, isLoading: authLoading } = useAuth();
+  const { signIn, user, isAdmin, isAuthReady } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!isAuthReady) return;
+    
+    if (user) {
       if (isAdmin) {
         navigate("/admin");
       } else {
         navigate("/");
       }
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, isAuthReady, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

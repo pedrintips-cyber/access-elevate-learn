@@ -16,6 +16,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   isLoading: boolean;
+  isAuthReady: boolean;
   isVIP: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -32,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdminLoading, setIsAdminLoading] = useState(true);
+  const [isAdminChecked, setIsAdminChecked] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -47,16 +48,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const checkAdminRole = async (userId: string) => {
-    setIsAdminLoading(true);
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
 
-    setIsAdmin(!error && !!data);
-    setIsAdminLoading(false);
+      setIsAdmin(!error && !!data);
+    } finally {
+      setIsAdminChecked(true);
+    }
   };
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setProfile(null);
           setIsAdmin(false);
-          setIsAdminLoading(false);
+          setIsAdminChecked(true);
         }
         
         setIsLoading(false);
@@ -138,13 +141,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isVIP = profile?.is_vip && 
     (!profile.vip_expires_at || new Date(profile.vip_expires_at) > new Date());
 
+  // isAuthReady = true quando auth carregou E admin check está completo
+  const isAuthReady = !isLoading && isAdminChecked;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
         profile,
-        isLoading: isLoading || isAdminLoading,
+        isLoading,
+        isAuthReady,
         isVIP: !!isVIP,
         isAdmin,
         signIn,
