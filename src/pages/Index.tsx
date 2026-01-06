@@ -2,6 +2,8 @@ import { Crown, Star, Users, Zap, ArrowRight, CheckCircle, MessageCircle, Headph
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   { icon: Shield, text: "Acesso exclusivo à comunidade" },
@@ -16,24 +18,36 @@ const stats = [
   { number: "100%", label: "Exclusivo" },
 ];
 
-const communityLinks = [
-  {
-    icon: MessageCircle,
-    title: "WhatsApp",
-    description: "Canal gratuito",
-    color: "from-green-500 to-green-600",
-    url: "#", // Substituir pelo link real
-  },
-  {
-    icon: Headphones,
-    title: "Discord",
-    description: "Comunidade ativa",
-    color: "from-indigo-500 to-purple-600",
-    url: "#", // Substituir pelo link real
-  },
-];
-
 const Home = () => {
+  const { data: settings } = useQuery({
+    queryKey: ["site-settings-home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("whatsapp_link, discord_link")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const communityLinks = [
+    {
+      icon: MessageCircle,
+      title: "WhatsApp",
+      description: "Canal gratuito",
+      color: "from-green-500 to-green-600",
+      url: settings?.whatsapp_link || "#",
+    },
+    {
+      icon: Headphones,
+      title: "Discord",
+      description: "Comunidade ativa",
+      color: "from-indigo-500 to-purple-600",
+      url: settings?.discord_link || "#",
+    },
+  ];
+
   return (
     <Layout>
       <div className="page-container">

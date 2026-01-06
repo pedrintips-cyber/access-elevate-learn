@@ -232,6 +232,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_approved: boolean | null
           updated_at: string
           user_id: string
         }
@@ -240,6 +241,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_approved?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -248,6 +250,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_approved?: boolean | null
           updated_at?: string
           user_id?: string
         }
@@ -288,22 +291,28 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          discord_link: string | null
           id: string
           site_description: string | null
           site_name: string | null
           updated_at: string | null
+          whatsapp_link: string | null
         }
         Insert: {
+          discord_link?: string | null
           id?: string
           site_description?: string | null
           site_name?: string | null
           updated_at?: string | null
+          whatsapp_link?: string | null
         }
         Update: {
+          discord_link?: string | null
           id?: string
           site_description?: string | null
           site_name?: string | null
           updated_at?: string | null
+          whatsapp_link?: string | null
         }
         Relationships: []
       }
