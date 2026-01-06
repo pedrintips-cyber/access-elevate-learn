@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Send, Image, X, Crown, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, Send, Image, X, Crown, Loader2, Sparkles, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -45,6 +45,7 @@ const FeedPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch posts
@@ -58,10 +59,8 @@ const FeedPage = () => {
 
       if (error) throw error;
 
-      // Get all unique user IDs
       const userIds = [...new Set((postsData || []).map(p => p.user_id))];
       
-      // Fetch profiles for all users
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name, avatar_url")
@@ -69,7 +68,6 @@ const FeedPage = () => {
 
       const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      // Get likes and comments counts
       const postsWithCounts = await Promise.all(
         (postsData || []).map(async (post) => {
           const [likesResult, commentsResult, userLikeResult] = await Promise.all([
@@ -108,7 +106,6 @@ const FeedPage = () => {
 
       if (error) throw error;
 
-      // Get profiles for commenters
       const userIds = [...new Set((commentsData || []).map(c => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -166,6 +163,7 @@ const FeedPage = () => {
       setNewPost("");
       setSelectedImage(null);
       setImagePreview(null);
+      setIsComposing(false);
       queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
     },
     onError: (error: Error) => {
@@ -269,76 +267,133 @@ const FeedPage = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 mb-6"
+            className="flex items-center justify-between mb-6"
           >
-            <Crown className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-display font-bold gradient-text-vip">
-              Feed VIP
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-warning/20 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-display font-bold gradient-text-vip">
+                  Feed VIP
+                </h1>
+                <p className="text-sm text-muted-foreground">Alta Cúpula</p>
+              </div>
+            </div>
+            {isVIP && user && !isComposing && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsComposing(true)}
+                className="btn-vip flex items-center gap-2 px-4 py-2"
+              >
+                <PenLine className="w-4 h-4" />
+                Postar
+              </motion.button>
+            )}
           </motion.div>
 
           {/* Create Post Section - Only for VIP users */}
-          {isVIP && user ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-4 mb-6"
-            >
-              <Textarea
-                placeholder="Compartilhe algo com a comunidade VIP..."
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
-                className="min-h-[100px] mb-3 bg-secondary/50 border-border/50"
-              />
-
-              {imagePreview && (
-                <div className="relative mb-3 inline-block">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="max-h-48 rounded-lg"
-                  />
-                  <button
-                    onClick={removeImage}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+          <AnimatePresence>
+            {isComposing && isVIP && user && (
+              <motion.div
+                initial={{ opacity: 0, y: -20, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -20, height: 0 }}
+                className="glass-card p-5 mb-6 border border-primary/20 overflow-hidden"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="w-10 h-10 border-2 border-primary/30">
+                    <AvatarFallback className="bg-primary/20 text-primary">
+                      {user?.email?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium flex items-center gap-2">
+                    Criar novo post
+                    <Crown className="w-4 h-4 text-primary" />
+                  </span>
                 </div>
-              )}
 
-              <div className="flex items-center justify-between">
-                <label className="cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <Image className="w-5 h-5" />
-                  <span className="text-sm">Adicionar imagem</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                </label>
+                <Textarea
+                  placeholder="O que você quer compartilhar com a comunidade?"
+                  value={newPost}
+                  onChange={(e) => setNewPost(e.target.value)}
+                  className="min-h-[120px] mb-4 bg-secondary/50 border-border/50 focus:border-primary/50 resize-none text-base"
+                  autoFocus
+                />
 
-                <Button
-                  onClick={() => createPostMutation.mutate()}
-                  disabled={createPostMutation.isPending || (!newPost.trim() && !selectedImage)}
-                  className="btn-vip"
-                >
-                  {createPostMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
-                  Publicar
-                </Button>
-              </div>
-            </motion.div>
-          ) : !user ? (
+                {imagePreview && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative mb-4 inline-block"
+                  >
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="max-h-48 rounded-xl border border-border/50"
+                    />
+                    <button
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 shadow-lg hover:scale-110 transition-transform"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </motion.div>
+                )}
+
+                <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                  <label className="cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-primary/10">
+                    <Image className="w-5 h-5" />
+                    <span className="text-sm font-medium">Imagem</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsComposing(false);
+                        setNewPost("");
+                        setSelectedImage(null);
+                        setImagePreview(null);
+                      }}
+                      className="border-border/50"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={() => createPostMutation.mutate()}
+                      disabled={createPostMutation.isPending || (!newPost.trim() && !selectedImage)}
+                      className="btn-vip"
+                    >
+                      {createPostMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Send className="w-4 h-4 mr-2" />
+                      )}
+                      Publicar
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Login/VIP prompts */}
+          {!user ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-6 mb-6 text-center"
+              className="glass-card p-8 mb-6 text-center border border-border/50"
             >
+              <Crown className="w-12 h-12 text-primary mx-auto mb-4" />
+              <h3 className="font-display font-semibold text-lg mb-2">Área exclusiva</h3>
               <p className="text-muted-foreground mb-4">
                 Faça login para interagir com a comunidade
               </p>
@@ -346,21 +401,24 @@ const FeedPage = () => {
                 <Button className="btn-vip">Fazer Login</Button>
               </Link>
             </motion.div>
-          ) : (
+          ) : !isVIP && !isComposing ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-6 mb-6 text-center border-primary/30"
+              className="glass-card p-8 mb-6 text-center border border-primary/20"
             >
-              <Crown className="w-12 h-12 text-primary mx-auto mb-3" />
-              <h3 className="font-display font-semibold text-lg mb-2">
-                Área exclusiva VIP
+              <Crown className="w-14 h-14 text-primary mx-auto mb-4" />
+              <h3 className="font-display font-semibold text-xl mb-2 gradient-text-vip">
+                Área VIP Alta Cúpula
               </h3>
               <p className="text-muted-foreground mb-4">
-                Torne-se VIP para publicar no feed
+                Torne-se VIP para publicar no feed exclusivo
               </p>
+              <Link to="/checkout">
+                <Button className="btn-vip">Quero ser VIP</Button>
+              </Link>
             </motion.div>
-          )}
+          ) : null}
 
           {/* Posts Feed */}
           {postsLoading ? (
@@ -377,19 +435,19 @@ const FeedPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: index * 0.05 }}
-                    className="glass-card p-4"
+                    className="glass-card p-5 border border-border/50 hover:border-primary/20 transition-colors"
                   >
                     {/* Post Header */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="w-10 h-10 border-2 border-primary/30">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="w-12 h-12 border-2 border-primary/30">
                         <AvatarImage src={post.profile?.avatar_url || ""} />
-                        <AvatarFallback className="bg-primary/20 text-primary">
+                        <AvatarFallback className="bg-primary/20 text-primary font-semibold">
                           {post.profile?.full_name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <p className="font-semibold flex items-center gap-2">
-                          {post.profile?.full_name || "Usuário"}
+                          {post.profile?.full_name || "Membro VIP"}
                           <Crown className="w-4 h-4 text-primary" />
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -403,7 +461,7 @@ const FeedPage = () => {
 
                     {/* Post Content */}
                     {post.content && (
-                      <p className="text-foreground mb-3 whitespace-pre-wrap">
+                      <p className="text-foreground mb-4 whitespace-pre-wrap leading-relaxed">
                         {post.content}
                       </p>
                     )}
@@ -412,13 +470,15 @@ const FeedPage = () => {
                       <img
                         src={post.image_url}
                         alt="Post"
-                        className="rounded-lg w-full max-h-96 object-cover mb-3"
+                        className="rounded-xl w-full max-h-[500px] object-cover mb-4 border border-border/30"
                       />
                     )}
 
                     {/* Post Actions */}
-                    <div className="flex items-center gap-4 pt-3 border-t border-border/50">
-                      <button
+                    <div className="flex items-center gap-6 pt-4 border-t border-border/50">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() =>
                           user && likeMutation.mutate({ postId: post.id, hasLiked: post.user_has_liked })
                         }
@@ -432,20 +492,22 @@ const FeedPage = () => {
                         <Heart
                           className={`w-5 h-5 ${post.user_has_liked ? "fill-current" : ""}`}
                         />
-                        <span className="text-sm">{post.likes_count}</span>
-                      </button>
+                        <span className="text-sm font-medium">{post.likes_count}</span>
+                      </motion.button>
 
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() =>
                           setExpandedComments(
                             expandedComments === post.id ? null : post.id
                           )
                         }
-                        className="flex items-center gap-2 text-muted-foreground hover:text-accent transition-colors"
+                        className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                       >
                         <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{post.comments_count}</span>
-                      </button>
+                        <span className="text-sm font-medium">{post.comments_count}</span>
+                      </motion.button>
                     </div>
 
                     {/* Comments Section */}
@@ -460,26 +522,35 @@ const FeedPage = () => {
                           {/* Comments List */}
                           <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
                             {comments?.map((comment) => (
-                              <div key={comment.id} className="flex gap-2">
+                              <motion.div 
+                                key={comment.id} 
+                                className="flex gap-3"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                              >
                                 <Avatar className="w-8 h-8">
                                   <AvatarImage src={comment.profile?.avatar_url || ""} />
                                   <AvatarFallback className="bg-secondary text-xs">
                                     {comment.profile?.full_name?.charAt(0) || "U"}
                                   </AvatarFallback>
                                 </Avatar>
-                                <div className="flex-1 bg-secondary/50 rounded-lg p-2">
-                                  <p className="text-sm font-medium">
+                                <div className="flex-1 bg-secondary/50 rounded-xl p-3">
+                                  <p className="text-sm font-medium mb-1">
                                     {comment.profile?.full_name || "Usuário"}
                                   </p>
-                                  <p className="text-sm text-foreground">
-                                    {comment.content}
+                                  <p className="text-sm text-foreground/90">{comment.content}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {formatDistanceToNow(new Date(comment.created_at), {
+                                      addSuffix: true,
+                                      locale: ptBR,
+                                    })}
                                   </p>
                                 </div>
-                              </div>
+                              </motion.div>
                             ))}
-                            {comments?.length === 0 && (
-                              <p className="text-center text-muted-foreground text-sm">
-                                Nenhum comentário ainda
+                            {(!comments || comments.length === 0) && (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                Nenhum comentário ainda. Seja o primeiro!
                               </p>
                             )}
                           </div>
@@ -500,10 +571,9 @@ const FeedPage = () => {
                                     });
                                   }
                                 }}
-                                className="flex-1 bg-secondary/50 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
+                                className="flex-1 bg-secondary/50 border border-border/50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 transition-colors"
                               />
                               <Button
-                                size="sm"
                                 onClick={() =>
                                   commentMutation.mutate({
                                     postId: post.id,
@@ -511,8 +581,14 @@ const FeedPage = () => {
                                   })
                                 }
                                 disabled={!newComment.trim() || commentMutation.isPending}
+                                size="icon"
+                                className="btn-vip h-10 w-10"
                               >
-                                <Send className="w-4 h-4" />
+                                {commentMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Send className="w-4 h-4" />
+                                )}
                               </Button>
                             </div>
                           )}
@@ -527,14 +603,16 @@ const FeedPage = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className="text-center py-16"
             >
-              <Crown className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="font-display font-semibold text-lg mb-2">
-                Nenhum post ainda
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-10 h-10 text-primary/50" />
+              </div>
+              <h3 className="font-display font-semibold text-xl mb-2">
+                Feed vazio
               </h3>
               <p className="text-muted-foreground">
-                Seja o primeiro a compartilhar algo!
+                Seja o primeiro a publicar na Alta Cúpula!
               </p>
             </motion.div>
           )}
