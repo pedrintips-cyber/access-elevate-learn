@@ -1,12 +1,12 @@
-import { Home, BookOpen, Wrench, Crown, User } from "lucide-react";
+import { Home, BookOpen, Rss, MessageSquare, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: BookOpen, label: "Aulas", path: "/free" },
-  { icon: Wrench, label: "Ferramentas", path: "/tools" },
-  { icon: Crown, label: "VIP", path: "/vip" },
+  { icon: Rss, label: "Feed", path: "/feed" },
+  { icon: MessageSquare, label: "Feedback", path: "/feedback" },
   { icon: User, label: "Perfil", path: "/profile" },
 ];
 

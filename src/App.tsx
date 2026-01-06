@@ -25,6 +25,8 @@ import AdminLessons from "./pages/admin/AdminLessons";
 import AdminTools from "./pages/admin/AdminTools";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import FeedPage from "./pages/FeedPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/vip/lesson/:id" element={<VIPLessonPage />} />
             <Route path="/tools" element={<ToolsPage />} />
             <Route path="/tools/category/:id" element={<ToolsCategoryPage />} />
+            <Route path="/feed" element={<FeedPage />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/login" element={<LoginPage />} />
