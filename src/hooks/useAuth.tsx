@@ -79,9 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
           setIsAdmin(false);
           setIsAdminChecked(true);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -93,9 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         fetchProfile(session.user.id);
         checkAdminRole(session.user.id);
+      } else {
+        // No session - mark as ready immediately
+        setIsAdminChecked(true);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
