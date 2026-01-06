@@ -1,9 +1,10 @@
-import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones } from "lucide-react";
+import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones, Copy, Clock, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const menuItems = [
   { icon: Bell, label: "Notificações", path: "/settings/notifications" },
@@ -17,25 +18,46 @@ const communityLinks = [
     icon: MessageCircle,
     title: "WhatsApp",
     color: "from-green-500 to-green-600",
-    url: "#", // Substituir pelo link real
+    url: "#",
   },
   {
     icon: Headphones,
     title: "Discord",
     color: "from-indigo-500 to-purple-600",
-    url: "#", // Substituir pelo link real
+    url: "#",
   },
 ];
 
 const ProfilePage = () => {
   const { user, profile, isVIP, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
     toast.success("Você saiu da conta");
     navigate("/");
   };
+
+  const copyUserId = () => {
+    if (user?.id) {
+      navigator.clipboard.writeText(user.id);
+      setCopied(true);
+      toast.success("ID copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getVIPDaysRemaining = () => {
+    if (!profile?.vip_expires_at) return null;
+    const expiresAt = new Date(profile.vip_expires_at);
+    const now = new Date();
+    const diffTime = expiresAt.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const vipDaysRemaining = getVIPDaysRemaining();
 
   if (isLoading) {
     return (
@@ -163,7 +185,69 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* User ID */}
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground mb-2">Seu ID de usuário</p>
+                  <button
+                    onClick={copyUserId}
+                    className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors w-full"
+                  >
+                    <code className="text-xs text-foreground/80 flex-1 text-left truncate font-mono">
+                      {user.id}
+                    </code>
+                    {copied ? (
+                      <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </button>
+                </div>
               </motion.div>
+
+              {/* VIP Status Card */}
+              {isVIP && vipDaysRemaining !== null && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="glass-card p-5 mb-6 relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-warning/5 to-transparent" />
+                  <div className="relative flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-warning flex items-center justify-center flex-shrink-0">
+                      <Crown className="w-7 h-7 text-background" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-display font-bold text-lg">Status VIP Ativo</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          {vipDaysRemaining === 0 
+                            ? "Expira hoje!" 
+                            : vipDaysRemaining === 1 
+                              ? "Expira amanhã" 
+                              : `${vipDaysRemaining} dias restantes`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-display font-bold text-primary">{vipDaysRemaining}</p>
+                      <p className="text-xs text-muted-foreground">dias</p>
+                    </div>
+                  </div>
+                  {vipDaysRemaining <= 7 && (
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                      <Link 
+                        to="/checkout" 
+                        className="btn-vip w-full flex items-center justify-center text-sm"
+                      >
+                        Renovar VIP
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              )}
 
               {/* VIP CTA for Free Users */}
               {!isVIP && (
