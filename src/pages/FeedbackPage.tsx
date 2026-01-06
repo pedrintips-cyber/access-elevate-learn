@@ -90,7 +90,8 @@ const statusConfig: Record<string, { icon: React.ReactNode; label: string; color
 };
 
 const FeedbackPage = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isVIP, isLoading: authLoading } = useAuth();
+  const canSubmit = user && isVIP; // Apenas VIP pode enviar feedback
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [type, setType] = useState<string>("suggestion");
@@ -189,7 +190,7 @@ const FeedbackPage = () => {
                 <p className="text-sm text-muted-foreground">Sua opinião importa</p>
               </div>
             </div>
-            {user && !showForm && (
+            {canSubmit && !showForm && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -204,7 +205,7 @@ const FeedbackPage = () => {
 
           {/* Create Feedback Form */}
           <AnimatePresence>
-            {showForm && user && (
+            {showForm && canSubmit && (
               <motion.div
                 initial={{ opacity: 0, y: -20, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: "auto" }}
@@ -290,20 +291,22 @@ const FeedbackPage = () => {
             )}
           </AnimatePresence>
 
-          {/* Login prompt */}
-          {!user && (
+          {/* VIP prompt - Apenas mostra se não é VIP */}
+          {!canSubmit && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-8 mb-6 text-center border border-border/50"
+              className="glass-card p-6 mb-6 text-center border border-primary/20"
             >
-              <MessageCircle className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-display font-semibold text-lg mb-2">Compartilhe sua opinião</h3>
-              <p className="text-muted-foreground mb-4">
-                Faça login para enviar feedback
+              <MessageCircle className="w-12 h-12 text-primary mx-auto mb-3" />
+              <h3 className="font-display font-semibold text-lg mb-2 gradient-text-vip">
+                Quer enviar feedback?
+              </h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Torne-se VIP para compartilhar sua opinião
               </p>
-              <Link to="/login">
-                <Button className="btn-vip">Fazer Login</Button>
+              <Link to="/checkout">
+                <Button className="btn-vip">Quero ser VIP</Button>
               </Link>
             </motion.div>
           )}
