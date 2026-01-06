@@ -40,6 +40,7 @@ interface Comment {
 
 const FeedPage = () => {
   const { user, isVIP, isLoading: authLoading } = useAuth();
+  const canPost = user && isVIP; // Apenas VIP pode postar
   const [newPost, setNewPost] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -174,12 +175,12 @@ const FeedPage = () => {
   // Like mutation
   const likeMutation = useMutation({
     mutationFn: async ({ postId, hasLiked }: { postId: string; hasLiked: boolean }) => {
-      if (!user) throw new Error("Faça login para curtir");
+      if (!canPost) throw new Error("Torne-se VIP para curtir");
 
       if (hasLiked) {
-        await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user.id);
+        await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user!.id);
       } else {
-        await supabase.from("post_likes").insert({ post_id: postId, user_id: user.id });
+        await supabase.from("post_likes").insert({ post_id: postId, user_id: user!.id });
       }
     },
     onSuccess: () => {
@@ -193,11 +194,11 @@ const FeedPage = () => {
   // Comment mutation
   const commentMutation = useMutation({
     mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
-      if (!user) throw new Error("Faça login para comentar");
+      if (!canPost) throw new Error("Torne-se VIP para comentar");
 
       const { error } = await supabase.from("post_comments").insert({
         post_id: postId,
-        user_id: user.id,
+        user_id: user!.id,
         content: content.trim(),
       });
 
@@ -280,7 +281,7 @@ const FeedPage = () => {
                 <p className="text-sm text-muted-foreground">Alta Cúpula</p>
               </div>
             </div>
-            {isVIP && user && !isComposing && (
+            {canPost && !isComposing && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -295,7 +296,7 @@ const FeedPage = () => {
 
           {/* Create Post Section - Only for VIP users */}
           <AnimatePresence>
-            {isComposing && isVIP && user && (
+            {isComposing && canPost && (
               <motion.div
                 initial={{ opacity: 0, y: -20, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: "auto" }}
@@ -385,40 +386,25 @@ const FeedPage = () => {
             )}
           </AnimatePresence>
 
-          {/* Login/VIP prompts */}
-          {!user ? (
+          {/* VIP prompt - Apenas mostra se não é VIP */}
+          {!canPost && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-8 mb-6 text-center border border-border/50"
+              className="glass-card p-6 mb-6 text-center border border-primary/20"
             >
-              <Crown className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-display font-semibold text-lg mb-2">Área exclusiva</h3>
-              <p className="text-muted-foreground mb-4">
-                Faça login para interagir com a comunidade
-              </p>
-              <Link to="/login">
-                <Button className="btn-vip">Fazer Login</Button>
-              </Link>
-            </motion.div>
-          ) : !isVIP && !isComposing ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-8 mb-6 text-center border border-primary/20"
-            >
-              <Crown className="w-14 h-14 text-primary mx-auto mb-4" />
-              <h3 className="font-display font-semibold text-xl mb-2 gradient-text-vip">
-                Área VIP Alta Cúpula
+              <Crown className="w-12 h-12 text-primary mx-auto mb-3" />
+              <h3 className="font-display font-semibold text-lg mb-2 gradient-text-vip">
+                Quer publicar no Feed?
               </h3>
-              <p className="text-muted-foreground mb-4">
-                Torne-se VIP para publicar no feed exclusivo
+              <p className="text-muted-foreground text-sm mb-4">
+                Torne-se VIP para postar, curtir e comentar
               </p>
               <Link to="/checkout">
                 <Button className="btn-vip">Quero ser VIP</Button>
               </Link>
             </motion.div>
-          ) : null}
+          )}
 
           {/* Posts Feed */}
           {postsLoading ? (
@@ -555,8 +541,8 @@ const FeedPage = () => {
                             )}
                           </div>
 
-                          {/* Add Comment */}
-                          {user && (
+                          {/* Add Comment - Only for VIP */}
+                          {canPost ? (
                             <div className="flex gap-2">
                               <input
                                 type="text"
@@ -591,6 +577,13 @@ const FeedPage = () => {
                                 )}
                               </Button>
                             </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground text-center py-2">
+                              <Link to="/checkout" className="text-primary hover:underline">
+                                Seja VIP
+                              </Link>{" "}
+                              para comentar
+                            </p>
                           )}
                         </motion.div>
                       )}
