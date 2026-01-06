@@ -37,12 +37,24 @@ export const AdminLayout = ({ children, title }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Only redirect after auth is fully loaded AND we've confirmed user is not admin
   useEffect(() => {
-    if (!isLoading && (!user || !isAdmin)) {
+    // Wait for auth to fully load before making any redirect decisions
+    if (isLoading) return;
+    
+    // If no user, redirect to login
+    if (!user) {
       navigate("/login");
+      return;
+    }
+    
+    // If user exists but is not admin, redirect to home
+    if (!isAdmin) {
+      navigate("/");
     }
   }, [isLoading, user, isAdmin, navigate]);
 
+  // Show loading while auth state is being determined
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -51,7 +63,18 @@ export const AdminLayout = ({ children, title }: AdminLayoutProps) => {
     );
   }
 
-  if (!isAdmin) {
+  // Show loading if user exists but admin status not yet confirmed
+  // This prevents flash of redirect while isAdmin is being fetched
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If no user at all, show nothing (redirect will happen via useEffect)
+  if (!user) {
     return null;
   }
 
