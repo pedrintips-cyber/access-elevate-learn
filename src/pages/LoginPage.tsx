@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,14 +7,26 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +53,24 @@ const LoginPage = () => {
     }
     
     toast.success("Login realizado com sucesso!");
-    navigate("/");
+    
+    // Check if user is admin and redirect accordingly
+    const { data: { user: loggedUser } } = await supabase.auth.getUser();
+    if (loggedUser) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', loggedUser.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (roleData) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    }
+    
     setIsLoading(false);
   };
 
@@ -129,14 +158,6 @@ const LoginPage = () => {
               </Button>
             </form>
 
-            <div className="text-center mt-6">
-              <p className="text-sm text-muted-foreground">
-                Não tem uma conta?{" "}
-                <Link to="/register" className="text-primary hover:underline">
-                  Criar conta
-                </Link>
-              </p>
-            </div>
           </motion.div>
         </div>
       </div>
