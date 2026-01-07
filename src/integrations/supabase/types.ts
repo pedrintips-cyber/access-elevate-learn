@@ -165,6 +165,60 @@ export type Database = {
           },
         ]
       }
+      pix_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          end_to_end_id: string | null
+          external_id: string
+          id: string
+          paid_at: string | null
+          payer_document: string
+          payer_email: string
+          payer_name: string
+          qr_code: string | null
+          qr_code_image: string | null
+          status: string
+          tribopay_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          end_to_end_id?: string | null
+          external_id: string
+          id?: string
+          paid_at?: string | null
+          payer_document: string
+          payer_email: string
+          payer_name: string
+          qr_code?: string | null
+          qr_code_image?: string | null
+          status?: string
+          tribopay_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          end_to_end_id?: string | null
+          external_id?: string
+          id?: string
+          paid_at?: string | null
+          payer_document?: string
+          payer_email?: string
+          payer_name?: string
+          qr_code?: string | null
+          qr_code_image?: string | null
+          status?: string
+          tribopay_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
