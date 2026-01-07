@@ -54,15 +54,30 @@ export default function AdminUsers() {
 
   const updateVipMutation = useMutation({
     mutationFn: async ({ userId, isVip, days }: { userId: string; isVip: boolean; days?: number }) => {
-      // Primeiro verifica se o usuário existe
+      // Limpa o ID removendo espaços
+      const cleanUserId = userId.trim();
+      
+      // Valida formato de UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(cleanUserId)) {
+        throw new Error("ID inválido. O ID deve ser um UUID válido (ex: f6be608f-b448-482d-9cb7-cfab254033f8)");
+      }
+
+      // Verifica se o usuário existe
       const { data: existingUser, error: fetchError } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("id", userId)
+        .select("id, email")
+        .eq("id", cleanUserId)
         .maybeSingle();
       
-      if (fetchError) throw fetchError;
-      if (!existingUser) throw new Error("Usuário não encontrado com esse ID");
+      if (fetchError) {
+        console.error("Erro ao buscar usuário:", fetchError);
+        throw new Error("Erro ao buscar usuário: " + fetchError.message);
+      }
+      
+      if (!existingUser) {
+        throw new Error("Usuário não encontrado. Verifique se o ID está correto e se o usuário já fez login na plataforma.");
+      }
 
       const updateData: any = { is_vip: isVip };
       
@@ -75,13 +90,16 @@ export default function AdminUsers() {
       const { error } = await supabase
         .from("profiles")
         .update(updateData)
-        .eq("id", userId);
+        .eq("id", cleanUserId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar VIP:", error);
+        throw new Error("Erro ao atualizar VIP: " + error.message);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      toast.success("Status VIP atualizado!");
+      toast.success("Status VIP atualizado com sucesso!");
       setSelectedUser(null);
       setUserIdInput("");
     },
