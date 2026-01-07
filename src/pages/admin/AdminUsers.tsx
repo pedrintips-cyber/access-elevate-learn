@@ -54,6 +54,16 @@ export default function AdminUsers() {
 
   const updateVipMutation = useMutation({
     mutationFn: async ({ userId, isVip, days }: { userId: string; isVip: boolean; days?: number }) => {
+      // Primeiro verifica se o usuário existe
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+      
+      if (fetchError) throw fetchError;
+      if (!existingUser) throw new Error("Usuário não encontrado com esse ID");
+
       const updateData: any = { is_vip: isVip };
       
       if (isVip && days) {
@@ -73,8 +83,9 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("Status VIP atualizado!");
       setSelectedUser(null);
+      setUserIdInput("");
     },
-    onError: () => toast.error("Erro ao atualizar status"),
+    onError: (error: Error) => toast.error(error.message || "Erro ao atualizar status"),
   });
 
   const filteredUsers = users?.filter((user) => {
