@@ -49,6 +49,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAdminRole = async (userId: string) => {
     try {
+      console.log('[Auth] Checking admin role for user:', userId);
+      
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -56,7 +58,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('role', 'admin')
         .maybeSingle();
 
+      if (error) {
+        console.error('[Auth] Error checking admin role:', error);
+      }
+      
+      console.log('[Auth] Admin check result:', { data, error, isAdmin: !error && !!data });
       setIsAdmin(!error && !!data);
+    } catch (err) {
+      console.error('[Auth] Exception in checkAdminRole:', err);
+      setIsAdmin(false);
     } finally {
       setIsAdminChecked(true);
       setIsLoading(false);
