@@ -120,6 +120,12 @@ serve(async (req) => {
       );
     }
 
+    // Extract PIX data from response - TriboPay returns it inside 'pix' object
+    const pixCode = tribopayData.pix?.code || tribopayData.pixCopiaECola || tribopayData.qrCode || null;
+    const pixImage = tribopayData.pix?.imageBase64 || tribopayData.imageBase64 || null;
+
+    console.log('Extracted PIX data:', { pixCode: pixCode ? 'present' : 'missing', pixImage: pixImage ? 'present' : 'missing' });
+
     // Save transaction to database
     const { error: dbError } = await supabase
       .from('pix_transactions')
@@ -131,8 +137,8 @@ serve(async (req) => {
         payer_name: payer.name.trim(),
         payer_email: payer.email.trim().toLowerCase(),
         payer_document: cpfClean,
-        qr_code: tribopayData.pixCopiaECola || tribopayData.qrCode || null,
-        qr_code_image: tribopayData.imageBase64 || null,
+        qr_code: pixCode,
+        qr_code_image: pixImage,
         tribopay_id: tribopayData.id || null,
       });
 
@@ -145,8 +151,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         externalId,
-        qrCode: tribopayData.pixCopiaECola || tribopayData.qrCode,
-        qrCodeImage: tribopayData.imageBase64,
+        qrCode: pixCode,
+        qrCodeImage: pixImage,
         amount,
         status: 'waiting_payment',
         tribopayId: tribopayData.id,
