@@ -29,6 +29,10 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import FeedPage from "./pages/FeedPage";
 import FeedbackPage from "./pages/FeedbackPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import SupportPage from "./pages/SupportPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +60,11 @@ const App = () => (
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            {/* Settings/Profile Routes */}
+            <Route path="/settings/notifications" element={<NotificationsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/support" element={<SupportPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
