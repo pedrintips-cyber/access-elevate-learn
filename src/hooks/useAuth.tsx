@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(!error && !!data);
     } finally {
       setIsAdminChecked(true);
+      setIsLoading(false);
     }
   };
 
