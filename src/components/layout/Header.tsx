@@ -25,9 +25,8 @@ export const Header = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-warning flex items-center justify-center">
               <Crown className="w-5 h-5 text-background" />
             </div>
-            <span className="font-display font-bold text-xl">
-              <span className="gradient-text-vip">Método</span>
-              <span className="text-foreground">VIP</span>
+            <span className="font-display font-bold text-xl gradient-text-vip">
+              Async
             </span>
           </Link>
 
