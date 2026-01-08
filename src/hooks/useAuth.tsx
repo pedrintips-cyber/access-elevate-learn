@@ -43,6 +43,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .maybeSingle();
 
     if (!error && data) {
+      // Check if VIP has expired and update if needed
+      if (data.is_vip && data.vip_expires_at) {
+        const expiresAt = new Date(data.vip_expires_at);
+        if (expiresAt < new Date()) {
+          // VIP expired - update in database
+          console.log('[Auth] VIP expired, removing VIP status');
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ is_vip: false })
+            .eq('id', userId);
+          
+          if (!updateError) {
+            setProfile({ ...data, is_vip: false });
+            return;
+          }
+        }
+      }
       setProfile(data);
     }
   };
