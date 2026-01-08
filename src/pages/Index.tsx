@@ -86,7 +86,7 @@ const Home = () => {
               >
                 <Crown className="w-12 h-12 md:w-14 md:h-14 text-primary mx-auto mb-4" />
                 <h1 className="font-display text-3xl md:text-5xl font-bold mb-2 leading-tight">
-                  <span className="gradient-text-vip">Alta Cúpula</span>
+                  <span className="gradient-text-vip">Async</span>
                 </h1>
                 <p className="text-base md:text-lg text-foreground/80 font-medium">
                   Comunidade VIP de Elite
@@ -185,7 +185,7 @@ const Home = () => {
           >
             <div className="text-center mb-6">
               <h2 className="font-display text-xl md:text-2xl font-bold mb-1">
-                Por que a <span className="text-primary">Alta Cúpula</span>?
+                Por que a <span className="text-primary">Async</span>?
               </h2>
               <p className="text-sm text-muted-foreground">
                 Benefícios exclusivos para membros VIP
@@ -225,7 +225,7 @@ const Home = () => {
             <div className="relative z-10">
               <Crown className="w-10 h-10 text-primary mx-auto mb-3" />
               <h2 className="font-display text-lg md:text-xl font-bold mb-2">
-                Entre para a <span className="text-primary">Alta Cúpula</span>
+                Entre para a <span className="text-primary">Async</span>
               </h2>
               <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
                 Faça parte da comunidade VIP mais exclusiva
