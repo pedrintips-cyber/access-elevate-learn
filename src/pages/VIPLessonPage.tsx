@@ -1,76 +1,119 @@
-import { ArrowLeft, Play, ChevronLeft, ChevronRight, Download, ExternalLink, CheckCircle } from "lucide-react";
+import { ArrowLeft, Play, ChevronLeft, ChevronRight, ExternalLink, CheckCircle, Loader2, Wrench, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-const lessonsData: Record<
-  string,
-  {
-    title: string;
-    description: string;
-    content: string;
-    moduleId: string;
-    moduleName: string;
-    prevLesson?: string;
-    nextLesson?: string;
-    links?: { label: string; url: string }[];
-  }
-> = {
-  "1-1": {
-    title: "Introdução ao Módulo",
-    description: "Visão geral do que você vai aprender",
-    content: `Bem-vindo ao Módulo 1 - Fundamentos Completos!
-
-Este módulo foi cuidadosamente estruturado para dar a você toda a base necessária para começar sua jornada com o pé direito.
-
-Ao longo das próximas aulas, você vai:
-
-1. Entender os conceitos fundamentais que sustentam todo o método
-2. Fazer um diagnóstico completo da sua situação atual
-3. Definir objetivos claros e alcançáveis
-4. Criar seu primeiro plano de ação
-5. Conhecer as ferramentas essenciais
-6. Aprender a evitar os erros mais comuns
-
-Cada aula foi pensada para ser prática e aplicável. Você não vai apenas aprender teoria - vai sair de cada aula com algo concreto para implementar.
-
-Vamos começar!`,
-    moduleId: "1",
-    moduleName: "Fundamentos Completos",
-    nextLesson: "1-2",
-  },
-  "1-2": {
-    title: "Conceitos Fundamentais",
-    description: "Os pilares que sustentam todo o método",
-    content: `Os 3 Pilares Fundamentais
-
-Todo o nosso método se sustenta sobre três pilares essenciais. Entendê-los profundamente é o primeiro passo para o sucesso.
-
-**Pilar 1: Clareza**
-Saber exatamente onde você está e onde quer chegar. Sem clareza, qualquer caminho parece válido - e isso é uma armadilha.
-
-**Pilar 2: Consistência**
-Resultados extraordinários vêm de ações ordinárias feitas de forma extraordinariamente consistente.
-
-**Pilar 3: Correção**
-A capacidade de ajustar a rota quando necessário. Flexibilidade estratégica com firmeza nos objetivos.
-
-Nas próximas aulas, vamos mergulhar em cada um desses pilares com exercícios práticos.`,
-    moduleId: "1",
-    moduleName: "Fundamentos Completos",
-    prevLesson: "1-1",
-    nextLesson: "1-3",
-    links: [
-      { label: "Material de Apoio", url: "#" },
-      { label: "Grupo no Telegram", url: "#" },
-    ],
-  },
-};
+interface RelatedLink {
+  type: "tool" | "lesson";
+  id: string;
+  label?: string;
+}
 
 const VIPLessonPage = () => {
   const { id } = useParams();
-  const lesson = lessonsData[id || "1-1"];
+
+  const { data: lesson, isLoading } = useQuery({
+    queryKey: ['vip-lesson', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select(`
+          *,
+          category:categories(id, name, type)
+        `)
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  // Fetch related tools and lessons
+  const relatedLinks = (lesson?.related_links as unknown as RelatedLink[] | null) || [];
+  
+  const { data: relatedTools } = useQuery({
+    queryKey: ['related-tools', relatedLinks],
+    queryFn: async () => {
+      const toolIds = relatedLinks.filter(l => l.type === 'tool').map(l => l.id);
+      if (toolIds.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('tools')
+        .select('id, title')
+        .in('id', toolIds);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: relatedLinks.some(l => l.type === 'tool'),
+  });
+
+  const { data: relatedLessons } = useQuery({
+    queryKey: ['related-lessons', relatedLinks],
+    queryFn: async () => {
+      const lessonIds = relatedLinks.filter(l => l.type === 'lesson').map(l => l.id);
+      if (lessonIds.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('id, title')
+        .in('id', lessonIds);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: relatedLinks.some(l => l.type === 'lesson'),
+  });
+
+  // Fetch adjacent lessons for navigation
+  const { data: adjacentLessons } = useQuery({
+    queryKey: ['adjacent-lessons', lesson?.category_id, lesson?.order_index],
+    queryFn: async () => {
+      if (!lesson?.category_id) return { prev: null, next: null };
+
+      const [prevResult, nextResult] = await Promise.all([
+        supabase
+          .from('lessons')
+          .select('id')
+          .eq('category_id', lesson.category_id)
+          .lt('order_index', lesson.order_index || 0)
+          .order('order_index', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('lessons')
+          .select('id')
+          .eq('category_id', lesson.category_id)
+          .gt('order_index', lesson.order_index || 0)
+          .order('order_index', { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      return {
+        prev: prevResult.data?.id || null,
+        next: nextResult.data?.id || null,
+      };
+    },
+    enabled: !!lesson?.category_id,
+  });
+
+  const isVipCategory = lesson?.category?.type === 'vip';
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="page-container content-container flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   if (!lesson) {
     return (
@@ -85,17 +128,38 @@ const VIPLessonPage = () => {
     );
   }
 
+  // Get video embed URL
+  const getEmbedUrl = (url: string | null) => {
+    if (!url) return null;
+    
+    // YouTube
+    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+    if (youtubeMatch) {
+      return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+    }
+    
+    // Vimeo
+    const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+    if (vimeoMatch) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    }
+    
+    return url;
+  };
+
+  const embedUrl = getEmbedUrl(lesson.video_url);
+
   return (
     <Layout>
       <div className="page-container">
         <div className="content-container">
           {/* Back Button */}
           <Link
-            to={`/vip/module/${lesson.moduleId}`}
+            to={isVipCategory ? `/vip/category/${lesson.category_id}` : `/free/category/${lesson.category_id}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            {lesson.moduleName}
+            {lesson.category?.name || 'Voltar'}
           </Link>
 
           {/* Video Player */}
@@ -104,13 +168,24 @@ const VIPLessonPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="aspect-video bg-muted rounded-2xl mb-6 flex items-center justify-center overflow-hidden relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
-            <div className="relative z-10 text-center">
-              <div className="w-16 h-16 rounded-full bg-foreground/20 flex items-center justify-center mb-4 mx-auto backdrop-blur-sm cursor-pointer hover:bg-foreground/30 transition-colors">
-                <Play className="w-8 h-8 text-foreground ml-1" />
-              </div>
-              <p className="text-sm text-muted-foreground">Clique para reproduzir</p>
-            </div>
+            {embedUrl ? (
+              <iframe
+                src={embedUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
+                <div className="relative z-10 text-center">
+                  <div className="w-16 h-16 rounded-full bg-foreground/20 flex items-center justify-center mb-4 mx-auto backdrop-blur-sm cursor-pointer hover:bg-foreground/30 transition-colors">
+                    <Play className="w-8 h-8 text-foreground ml-1" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Vídeo não disponível</p>
+                </div>
+              </>
+            )}
           </motion.div>
 
           {/* Lesson Info */}
@@ -123,29 +198,41 @@ const VIPLessonPage = () => {
             <p className="text-muted-foreground mb-6">{lesson.description}</p>
 
             {/* Content */}
-            <div className="glass-card p-6 mb-6">
-              <div className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
-                {lesson.content}
+            {lesson.content && (
+              <div className="glass-card p-6 mb-6">
+                <div className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                  {lesson.content}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Links */}
-            {lesson.links && lesson.links.length > 0 && (
+            {/* Related Links */}
+            {relatedLinks.length > 0 && (
               <div className="glass-card p-4 mb-6">
-                <h3 className="font-semibold text-sm mb-3">Materiais da Aula</h3>
+                <h3 className="font-semibold text-sm mb-3">Links Relacionados</h3>
                 <div className="space-y-2">
-                  {lesson.links.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4 text-primary" />
-                      <span className="text-sm">{link.label}</span>
-                    </a>
-                  ))}
+                  {relatedLinks.map((link, index) => {
+                    const item = link.type === 'tool' 
+                      ? relatedTools?.find(t => t.id === link.id)
+                      : relatedLessons?.find(l => l.id === link.id);
+                    
+                    if (!item) return null;
+                    
+                    const path = link.type === 'tool' ? `/tools/${link.id}` : `/vip/lesson/${link.id}`;
+                    const Icon = link.type === 'tool' ? Wrench : BookOpen;
+                    
+                    return (
+                      <Link
+                        key={index}
+                        to={path}
+                        className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
+                      >
+                        <Icon className="w-4 h-4 text-primary" />
+                        <span className="text-sm">{link.label || item.title}</span>
+                        <ExternalLink className="w-3 h-3 text-muted-foreground ml-auto" />
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -158,9 +245,9 @@ const VIPLessonPage = () => {
 
             {/* Navigation */}
             <div className="flex gap-4">
-              {lesson.prevLesson ? (
+              {adjacentLessons?.prev ? (
                 <Link
-                  to={`/vip/lesson/${lesson.prevLesson}`}
+                  to={`/vip/lesson/${adjacentLessons.prev}`}
                   className="flex-1 flex items-center justify-center gap-2 p-4 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
                 >
                   <ChevronLeft className="w-5 h-5" />
@@ -170,9 +257,9 @@ const VIPLessonPage = () => {
                 <div className="flex-1" />
               )}
               
-              {lesson.nextLesson && (
+              {adjacentLessons?.next && (
                 <Link
-                  to={`/vip/lesson/${lesson.nextLesson}`}
+                  to={`/vip/lesson/${adjacentLessons.next}`}
                   className="flex-1 flex items-center justify-center gap-2 p-4 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
                 >
                   <span className="text-sm">Próxima</span>
