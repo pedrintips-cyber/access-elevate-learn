@@ -1,95 +1,83 @@
-import { ArrowLeft, Play, Crown, Download, ExternalLink } from "lucide-react";
+import { ArrowLeft, Play, Crown, Loader2, Wrench, BookOpen, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-const lessonsData: Record<string, { title: string; description: string; videoUrl?: string; content: string }> = {
-  "1": {
-    title: "Introdução ao Método VIP",
-    description: "Descubra os fundamentos que transformam resultados",
-    content: `Bem-vindo à primeira aula do Método VIP!
-
-Nesta aula introdutória, você vai descobrir os princípios fundamentais que sustentam todo o nosso método. 
-
-Prepare-se para uma jornada de transformação onde você aprenderá:
-- Os conceitos base que guiam nosso método
-- Por que a maioria falha e como evitar os mesmos erros
-- O que diferencia resultados medianos de extraordinários
-
-Esta é apenas uma amostra do que você encontrará na versão completa. O conteúdo VIP vai muito além, com estratégias avançadas, casos práticos e suporte direto.`,
-  },
-  "2": {
-    title: "Os 3 Pilares do Sucesso",
-    description: "A base sólida que sustenta todo o método",
-    content: `Os 3 Pilares são a fundação de tudo que ensinamos.
-
-Pilar 1: Mentalidade
-A forma como você pensa determina seus resultados. Nesta seção você aprenderá a reprogramar padrões limitantes.
-
-Pilar 2: Estratégia
-Ter as ferramentas certas e saber quando usá-las. Revelamos as técnicas que realmente funcionam.
-
-Pilar 3: Ação Consistente
-Resultados vêm da execução diária. Mostramos como criar rotinas que geram resultados.
-
-No VIP, você terá acesso ao detalhamento completo de cada pilar com exercícios práticos e acompanhamento.`,
-  },
-  "3": {
-    title: "Primeiros Passos Práticos",
-    description: "Comece a aplicar os conceitos básicos",
-    content: `Hora de colocar em prática!
-
-Esta aula é sobre ação. Você vai aprender os primeiros passos para começar a ver resultados:
-
-1. Defina seu objetivo principal
-2. Mapeie sua situação atual
-3. Identifique as principais barreiras
-4. Crie seu primeiro plano de ação
-
-Lembre-se: o conhecimento sem ação não gera resultados. Use o que aprendeu aqui como ponto de partida.
-
-Na área VIP, você terá templates prontos, scripts e ferramentas para acelerar esse processo.`,
-  },
-  "4": {
-    title: "Mindset de Alta Performance",
-    description: "Desenvolva a mentalidade necessária",
-    content: `Sua mentalidade é seu maior ativo.
-
-Nesta aula exploramos:
-- Como os top performers pensam
-- Técnicas para eliminar crenças limitantes
-- Rituais matinais de sucesso
-- A importância do ambiente
-
-Pessoas de alta performance não nasceram assim. Elas desenvolveram hábitos e mentalidades específicas que qualquer um pode aprender.
-
-O módulo completo de Mindset no VIP inclui meditações guiadas, exercícios diários e técnicas avançadas de reprogramação mental.`,
-  },
-  "5": {
-    title: "Preview: Estratégias Avançadas",
-    description: "Uma amostra do conteúdo VIP",
-    content: `Bem-vindo ao preview exclusivo!
-
-Esta é uma pequena amostra do que você encontrará na área VIP:
-
-Estratégia #1: O Método 4-7-8
-Uma técnica poderosa para tomar decisões rápidas e assertivas.
-
-Estratégia #2: Alavancagem Inteligente
-Como multiplicar seus resultados com menos esforço.
-
-Estratégia #3: O Círculo de Ouro
-A estrutura que os líderes de mercado usam para se destacar.
-
-Estas são apenas 3 das mais de 50 estratégias disponíveis na área VIP. Cada uma vem com exemplos práticos, templates e suporte.
-
-Pronto para desbloquear tudo?`,
-  },
-};
+interface RelatedLink {
+  type: "tool" | "lesson";
+  id: string;
+  label?: string;
+}
 
 const FreeLessonPage = () => {
   const { id } = useParams();
-  const lesson = lessonsData[id || "1"];
+
+  const { data: lesson, isLoading } = useQuery({
+    queryKey: ['free-lesson', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select(`
+          *,
+          category:categories(id, name, type)
+        `)
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  // Fetch related tools and lessons
+  const relatedLinks = (lesson?.related_links as unknown as RelatedLink[] | null) || [];
+  
+  const { data: relatedTools } = useQuery({
+    queryKey: ['related-tools-free', relatedLinks],
+    queryFn: async () => {
+      const toolIds = relatedLinks.filter(l => l.type === 'tool').map(l => l.id);
+      if (toolIds.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('tools')
+        .select('id, title')
+        .in('id', toolIds);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: relatedLinks.some(l => l.type === 'tool'),
+  });
+
+  const { data: relatedLessons } = useQuery({
+    queryKey: ['related-lessons-free', relatedLinks],
+    queryFn: async () => {
+      const lessonIds = relatedLinks.filter(l => l.type === 'lesson').map(l => l.id);
+      if (lessonIds.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('id, title')
+        .in('id', lessonIds);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: relatedLinks.some(l => l.type === 'lesson'),
+  });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="page-container content-container flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   if (!lesson) {
     return (
@@ -104,32 +92,64 @@ const FreeLessonPage = () => {
     );
   }
 
+  // Get video embed URL
+  const getEmbedUrl = (url: string | null) => {
+    if (!url) return null;
+    
+    // YouTube
+    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+    if (youtubeMatch) {
+      return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+    }
+    
+    // Vimeo
+    const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+    if (vimeoMatch) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    }
+    
+    return url;
+  };
+
+  const embedUrl = getEmbedUrl(lesson.video_url);
+
   return (
     <Layout>
       <div className="page-container">
         <div className="content-container">
           {/* Back Button */}
           <Link
-            to="/free"
+            to={`/free/category/${lesson.category_id}`}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar
+            {lesson.category?.name || 'Voltar'}
           </Link>
 
-          {/* Video Player Placeholder */}
+          {/* Video Player */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="aspect-video bg-muted rounded-2xl mb-6 flex items-center justify-center overflow-hidden relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-primary/20" />
-            <div className="relative z-10 text-center">
-              <div className="w-16 h-16 rounded-full bg-foreground/20 flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
-                <Play className="w-8 h-8 text-foreground ml-1" />
-              </div>
-              <p className="text-sm text-muted-foreground">Clique para reproduzir</p>
-            </div>
+            {embedUrl ? (
+              <iframe
+                src={embedUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-primary/20" />
+                <div className="relative z-10 text-center">
+                  <div className="w-16 h-16 rounded-full bg-foreground/20 flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
+                    <Play className="w-8 h-8 text-foreground ml-1" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Vídeo não disponível</p>
+                </div>
+              </>
+            )}
           </motion.div>
 
           {/* Lesson Info */}
@@ -141,12 +161,46 @@ const FreeLessonPage = () => {
             <h1 className="font-display text-2xl font-bold mb-2">{lesson.title}</h1>
             <p className="text-muted-foreground mb-6">{lesson.description}</p>
 
-            <div className="glass-card p-6 mb-6">
-              <h2 className="font-semibold mb-4">Sobre esta aula</h2>
-              <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                {lesson.content}
+            {/* Content */}
+            {lesson.content && (
+              <div className="glass-card p-6 mb-6">
+                <h2 className="font-semibold mb-4">Sobre esta aula</h2>
+                <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {lesson.content}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Related Links */}
+            {relatedLinks.length > 0 && (
+              <div className="glass-card p-4 mb-6">
+                <h3 className="font-semibold text-sm mb-3">Links Relacionados</h3>
+                <div className="space-y-2">
+                  {relatedLinks.map((link, index) => {
+                    const item = link.type === 'tool' 
+                      ? relatedTools?.find(t => t.id === link.id)
+                      : relatedLessons?.find(l => l.id === link.id);
+                    
+                    if (!item) return null;
+                    
+                    const path = link.type === 'tool' ? `/tools/${link.id}` : `/free/lesson/${link.id}`;
+                    const Icon = link.type === 'tool' ? Wrench : BookOpen;
+                    
+                    return (
+                      <Link
+                        key={index}
+                        to={path}
+                        className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
+                      >
+                        <Icon className="w-4 h-4 text-primary" />
+                        <span className="text-sm">{link.label || item.title}</span>
+                        <ExternalLink className="w-3 h-3 text-muted-foreground ml-auto" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* VIP CTA - Fixed */}
