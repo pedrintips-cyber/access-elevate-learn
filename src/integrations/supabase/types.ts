@@ -125,6 +125,7 @@ export type Database = {
           id: string
           is_published: boolean | null
           order_index: number | null
+          related_links: Json | null
           thumbnail_url: string | null
           title: string
           video_url: string | null
@@ -138,6 +139,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           order_index?: number | null
+          related_links?: Json | null
           thumbnail_url?: string | null
           title: string
           video_url?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           order_index?: number | null
+          related_links?: Json | null
           thumbnail_url?: string | null
           title?: string
           video_url?: string | null

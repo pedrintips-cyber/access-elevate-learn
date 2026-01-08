@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -20,20 +21,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Video, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Video, Eye, EyeOff, Link as LinkIcon, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface Lesson {
+interface RelatedLink {
+  type: "tool" | "lesson";
   id: string;
-  title: string;
-  description: string | null;
-  video_url: string | null;
-  thumbnail_url: string | null;
-  duration: string | null;
-  category_id: string | null;
-  order_index: number | null;
-  is_published: boolean | null;
-  content: string | null;
+  label?: string;
 }
 
 interface Category {
@@ -42,10 +36,15 @@ interface Category {
   type: string;
 }
 
+interface Tool {
+  id: string;
+  title: string;
+}
+
 export default function AdminLessons() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -56,7 +55,12 @@ export default function AdminLessons() {
     order_index: 0,
     is_published: true,
     content: "",
+    related_links: [] as RelatedLink[],
   });
+
+  // For adding related links
+  const [linkType, setLinkType] = useState<"tool" | "lesson">("tool");
+  const [selectedLinkId, setSelectedLinkId] = useState("");
 
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["admin-lessons"],
@@ -83,11 +87,32 @@ export default function AdminLessons() {
     },
   });
 
+  const { data: tools } = useQuery({
+    queryKey: ["admin-tools-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tools")
+        .select("id, title")
+        .eq("is_published", true)
+        .order("title");
+      if (error) throw error;
+      return data as Tool[];
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("lessons").insert({
-        ...data,
+        title: data.title,
+        description: data.description || null,
+        video_url: data.video_url || null,
+        thumbnail_url: data.thumbnail_url || null,
+        duration: data.duration || null,
         category_id: data.category_id || null,
+        order_index: data.order_index,
+        is_published: data.is_published,
+        content: data.content || null,
+        related_links: data.related_links.length > 0 ? JSON.stringify(data.related_links) : null,
       });
       if (error) throw error;
     },
@@ -103,8 +128,16 @@ export default function AdminLessons() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const { error } = await supabase.from("lessons").update({
-        ...data,
+        title: data.title,
+        description: data.description || null,
+        video_url: data.video_url || null,
+        thumbnail_url: data.thumbnail_url || null,
+        duration: data.duration || null,
         category_id: data.category_id || null,
+        order_index: data.order_index,
+        is_published: data.is_published,
+        content: data.content || null,
+        related_links: data.related_links.length > 0 ? JSON.stringify(data.related_links) : null,
       }).eq("id", id);
       if (error) throw error;
     },
@@ -140,12 +173,30 @@ export default function AdminLessons() {
       order_index: 0,
       is_published: true,
       content: "",
+      related_links: [],
     });
-    setEditingLesson(null);
+    setEditingLessonId(null);
+    setLinkType("tool");
+    setSelectedLinkId("");
   };
 
-  const handleEdit = (lesson: Lesson) => {
-    setEditingLesson(lesson);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEdit = (lesson: any) => {
+    setEditingLessonId(lesson.id);
+    // Parse related_links from JSON
+    let relatedLinks: RelatedLink[] = [];
+    if (lesson.related_links) {
+      try {
+        if (typeof lesson.related_links === 'string') {
+          relatedLinks = JSON.parse(lesson.related_links);
+        } else if (Array.isArray(lesson.related_links)) {
+          relatedLinks = lesson.related_links;
+        }
+      } catch {
+        relatedLinks = [];
+      }
+    }
+    
     setFormData({
       title: lesson.title,
       description: lesson.description || "",
@@ -156,16 +207,58 @@ export default function AdminLessons() {
       order_index: lesson.order_index || 0,
       is_published: lesson.is_published ?? true,
       content: lesson.content || "",
+      related_links: relatedLinks,
     });
     setIsOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingLesson) {
-      updateMutation.mutate({ id: editingLesson.id, data: formData });
+    if (editingLessonId) {
+      updateMutation.mutate({ id: editingLessonId, data: formData });
     } else {
       createMutation.mutate(formData);
+    }
+  };
+
+  const addRelatedLink = () => {
+    if (!selectedLinkId) return;
+    
+    // Check if already exists
+    const exists = formData.related_links.some(
+      link => link.type === linkType && link.id === selectedLinkId
+    );
+    if (exists) {
+      toast.error("Este item já foi adicionado");
+      return;
+    }
+
+    const newLink: RelatedLink = {
+      type: linkType,
+      id: selectedLinkId,
+    };
+    
+    setFormData({
+      ...formData,
+      related_links: [...formData.related_links, newLink],
+    });
+    setSelectedLinkId("");
+  };
+
+  const removeRelatedLink = (index: number) => {
+    setFormData({
+      ...formData,
+      related_links: formData.related_links.filter((_, i) => i !== index),
+    });
+  };
+
+  const getItemName = (link: RelatedLink) => {
+    if (link.type === "tool") {
+      return tools?.find(t => t.id === link.id)?.title || "Ferramenta não encontrada";
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const lesson = lessons?.find((l: any) => l.id === link.id);
+      return lesson?.title || "Aula não encontrada";
     }
   };
 
@@ -173,6 +266,26 @@ export default function AdminLessons() {
     free: "Gratuito",
     vip: "VIP",
     tools: "Ferramentas",
+  };
+
+  // Filter lessons for linking (exclude current lesson being edited)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const availableLessons = lessons?.filter((l: any) => l.id !== editingLessonId) || [];
+
+  // Helper to parse related links for display
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getRelatedLinksCount = (lesson: any): number => {
+    if (!lesson.related_links) return 0;
+    try {
+      if (typeof lesson.related_links === 'string') {
+        return JSON.parse(lesson.related_links).length;
+      } else if (Array.isArray(lesson.related_links)) {
+        return lesson.related_links.length;
+      }
+    } catch {
+      return 0;
+    }
+    return 0;
   };
 
   return (
@@ -191,7 +304,7 @@ export default function AdminLessons() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingLesson ? "Editar Aula" : "Nova Aula"}
+                {editingLessonId ? "Editar Aula" : "Nova Aula"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -247,6 +360,9 @@ export default function AdminLessons() {
                   onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
                   placeholder="https://..."
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cole o link do YouTube, Vimeo ou qualquer player de vídeo
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">URL da Thumbnail</label>
@@ -265,6 +381,76 @@ export default function AdminLessons() {
                   rows={4}
                 />
               </div>
+
+              {/* Related Links Section */}
+              <div className="border border-border rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4 text-primary" />
+                  <label className="text-sm font-medium">Links Relacionados</label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adicione atalhos para ferramentas ou outras aulas que complementam este conteúdo
+                </p>
+                
+                <div className="flex gap-2">
+                  <Select value={linkType} onValueChange={(v) => setLinkType(v as "tool" | "lesson")}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tool">Ferramenta</SelectItem>
+                      <SelectItem value="lesson">Aula</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={selectedLinkId} onValueChange={setSelectedLinkId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {linkType === "tool" ? (
+                        tools?.map((tool) => (
+                          <SelectItem key={tool.id} value={tool.id}>
+                            {tool.title}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        availableLessons.map((lesson: any) => (
+                          <SelectItem key={lesson.id} value={lesson.id}>
+                            {lesson.title}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button type="button" variant="secondary" onClick={addRelatedLink}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {formData.related_links.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.related_links.map((link, index) => (
+                      <Badge key={index} variant="secondary" className="gap-1 pr-1">
+                        <span className="text-xs text-muted-foreground">
+                          {link.type === "tool" ? "🔧" : "📚"}
+                        </span>
+                        {getItemName(link)}
+                        <button
+                          type="button"
+                          onClick={() => removeRelatedLink(index)}
+                          className="ml-1 hover:bg-destructive/20 rounded p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Ordem</label>
@@ -290,7 +476,7 @@ export default function AdminLessons() {
                   {(createMutation.isPending || updateMutation.isPending) && (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   )}
-                  {editingLesson ? "Salvar" : "Criar"}
+                  {editingLessonId ? "Salvar" : "Criar"}
                 </Button>
               </div>
             </form>
@@ -315,6 +501,7 @@ export default function AdminLessons() {
               </tr>
             </thead>
             <tbody>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {lessons?.map((lesson: any) => (
                 <tr key={lesson.id} className="border-t border-border">
                   <td className="p-4">
@@ -327,6 +514,12 @@ export default function AdminLessons() {
                         <p className="text-sm text-muted-foreground line-clamp-1">
                           {lesson.description}
                         </p>
+                        {getRelatedLinksCount(lesson) > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <LinkIcon className="w-3 h-3 text-primary" />
+                            <span className="text-xs text-primary">{getRelatedLinksCount(lesson)} link(s)</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
