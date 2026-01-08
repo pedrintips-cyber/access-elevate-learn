@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,8 @@ import {
   Search,
   Calendar,
   Shield,
-  ShieldOff
+  ShieldOff,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays, addDays } from "date-fns";
@@ -54,16 +56,13 @@ export default function AdminUsers() {
 
   const updateVipMutation = useMutation({
     mutationFn: async ({ userId, isVip, days }: { userId: string; isVip: boolean; days?: number }) => {
-      // Limpa o ID removendo espaços
       const cleanUserId = userId.trim();
       
-      // Valida formato de UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(cleanUserId)) {
         throw new Error("ID inválido. O ID deve ser um UUID válido (ex: f6be608f-b448-482d-9cb7-cfab254033f8)");
       }
 
-      // Verifica se o usuário existe
       const { data: existingUser, error: fetchError } = await supabase
         .from("profiles")
         .select("id, email")
@@ -79,7 +78,7 @@ export default function AdminUsers() {
         throw new Error("Usuário não encontrado. Verifique se o ID está correto e se o usuário já fez login na plataforma.");
       }
 
-      const updateData: any = { is_vip: isVip };
+      const updateData: Record<string, unknown> = { is_vip: isVip };
       
       if (isVip && days) {
         updateData.vip_expires_at = addDays(new Date(), days).toISOString();
@@ -115,11 +114,23 @@ export default function AdminUsers() {
     );
   });
 
-  const getDaysRemaining = (expiresAt: string | null) => {
+  const vipUsers = filteredUsers?.filter((user) => {
+    if (!user.is_vip) return false;
+    const daysRemaining = getDaysRemaining(user.vip_expires_at);
+    return daysRemaining === null || daysRemaining > 0;
+  }) || [];
+
+  const nonVipUsers = filteredUsers?.filter((user) => {
+    if (!user.is_vip) return true;
+    const daysRemaining = getDaysRemaining(user.vip_expires_at);
+    return daysRemaining !== null && daysRemaining <= 0;
+  }) || [];
+
+  function getDaysRemaining(expiresAt: string | null) {
     if (!expiresAt) return null;
     const days = differenceInDays(new Date(expiresAt), new Date());
     return days > 0 ? days : 0;
-  };
+  }
 
   const handleGiveVip = () => {
     if (selectedUser) {
@@ -139,6 +150,104 @@ export default function AdminUsers() {
       setUserIdInput("");
     }
   };
+
+  const UserRow = ({ user }: { user: Profile }) => {
+    const daysRemaining = getDaysRemaining(user.vip_expires_at);
+    const isExpired = user.is_vip && daysRemaining === 0;
+    
+    return (
+      <tr className="border-t border-border">
+        <td className="p-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              user.is_vip && !isExpired ? "bg-primary/20" : "bg-secondary"
+            }`}>
+              {user.is_vip && !isExpired ? (
+                <Crown className="w-5 h-5 text-primary" />
+              ) : (
+                <User className="w-5 h-5 text-muted-foreground" />
+              )}
+            </div>
+            <div>
+              <p className="font-medium">{user.full_name || "Sem nome"}</p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <p className="text-xs text-muted-foreground font-mono">ID: {user.id.slice(0, 8)}...</p>
+            </div>
+          </div>
+        </td>
+        <td className="p-4 hidden md:table-cell text-muted-foreground">
+          {user.created_at 
+            ? format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })
+            : "-"
+          }
+        </td>
+        <td className="p-4 text-center">
+          {user.is_vip && !isExpired ? (
+            <span className="px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary">
+              VIP
+            </span>
+          ) : isExpired ? (
+            <span className="px-2 py-1 rounded text-xs font-medium bg-destructive/20 text-destructive">
+              Expirado
+            </span>
+          ) : (
+            <span className="px-2 py-1 rounded text-xs font-medium bg-secondary text-muted-foreground">
+              Free
+            </span>
+          )}
+        </td>
+        <td className="p-4 text-center hidden md:table-cell">
+          {user.is_vip && daysRemaining !== null && daysRemaining > 0 ? (
+            <span className={`font-medium ${
+              daysRemaining <= 7 ? "text-warning" : "text-foreground"
+            }`}>
+              {daysRemaining} dias
+            </span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </td>
+        <td className="p-4">
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setSelectedUser(user)}
+            >
+              Gerenciar
+            </Button>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  const UserTable = ({ users }: { users: Profile[] }) => (
+    <div className="glass-card overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-secondary/50">
+          <tr>
+            <th className="text-left p-4 font-medium">Usuário</th>
+            <th className="text-left p-4 font-medium hidden md:table-cell">Cadastro</th>
+            <th className="text-center p-4 font-medium">Status</th>
+            <th className="text-center p-4 font-medium hidden md:table-cell">Dias VIP</th>
+            <th className="text-right p-4 font-medium">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.length > 0 ? (
+            users.map((user) => <UserRow key={user.id} user={user} />)
+          ) : (
+            <tr>
+              <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                Nenhum usuário encontrado
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <AdminLayout title="Usuários">
@@ -202,91 +311,33 @@ export default function AdminUsers() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-secondary/50">
-              <tr>
-                <th className="text-left p-4 font-medium">Usuário</th>
-                <th className="text-left p-4 font-medium hidden md:table-cell">Cadastro</th>
-                <th className="text-center p-4 font-medium">Status</th>
-                <th className="text-center p-4 font-medium hidden md:table-cell">Dias VIP</th>
-                <th className="text-right p-4 font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers?.map((user) => {
-                const daysRemaining = getDaysRemaining(user.vip_expires_at);
-                const isExpired = user.is_vip && daysRemaining === 0;
-                
-                return (
-                  <tr key={user.id} className="border-t border-border">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          user.is_vip ? "bg-primary/20" : "bg-secondary"
-                        }`}>
-                          {user.is_vip ? (
-                            <Crown className="w-5 h-5 text-primary" />
-                          ) : (
-                            <User className="w-5 h-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium">{user.full_name || "Sem nome"}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                          <p className="text-xs text-muted-foreground font-mono">ID: {user.id.slice(0, 8)}...</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 hidden md:table-cell text-muted-foreground">
-                      {user.created_at 
-                        ? format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })
-                        : "-"
-                      }
-                    </td>
-                    <td className="p-4 text-center">
-                      {user.is_vip ? (
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          isExpired 
-                            ? "bg-destructive/20 text-destructive"
-                            : "bg-primary/20 text-primary"
-                        }`}>
-                          {isExpired ? "Expirado" : "VIP"}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-secondary text-muted-foreground">
-                          Free
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-center hidden md:table-cell">
-                      {user.is_vip && daysRemaining !== null ? (
-                        <span className={`font-medium ${
-                          daysRemaining <= 7 ? "text-warning" : "text-foreground"
-                        }`}>
-                          {daysRemaining} dias
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex justify-end">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedUser(user)}
-                        >
-                          Gerenciar
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Tabs defaultValue="vip" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="vip" className="gap-2">
+              <Crown className="w-4 h-4" />
+              VIP ({vipUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="free" className="gap-2">
+              <Users className="w-4 h-4" />
+              Free ({nonVipUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="all" className="gap-2">
+              Todos ({filteredUsers?.length || 0})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="vip">
+            <UserTable users={vipUsers} />
+          </TabsContent>
+          
+          <TabsContent value="free">
+            <UserTable users={nonVipUsers} />
+          </TabsContent>
+          
+          <TabsContent value="all">
+            <UserTable users={filteredUsers || []} />
+          </TabsContent>
+        </Tabs>
       )}
 
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
