@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Crown, Shield, CheckCircle, ArrowLeft, Copy, Loader2, RefreshCw, Zap, Users, Headphones, BookOpen } from "lucide-react";
+import { Crown, Shield, CheckCircle, ArrowLeft, Copy, Loader2, RefreshCw, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -11,10 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const benefits = [
-  { icon: BookOpen, text: "50+ aulas exclusivas" },
-  { icon: Zap, text: "Scripts e templates" },
-  { icon: Users, text: "Comunidade privada" },
-  { icon: Headphones, text: "Suporte prioritário" },
+  "Acesso a todos os módulos VIP",
+  "Mais de 50 aulas exclusivas",
+  "Scripts e templates prontos",
+  "Comunidade privada no Discord",
+  "Suporte prioritário",
+  "Atualizações gratuitas",
 ];
 
 const VIP_PRICE_CENTS = 9700;
@@ -173,7 +175,7 @@ const CheckoutPage = () => {
   const copyToClipboard = () => {
     if (paymentData?.qrCode) {
       navigator.clipboard.writeText(paymentData.qrCode);
-      toast.success("Código PIX copiado!");
+      toast.success("Código copiado!");
     }
   };
 
@@ -183,52 +185,32 @@ const CheckoutPage = () => {
   return (
     <Layout>
       <div className="min-h-screen py-6 px-4">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-sm mx-auto">
           {/* Back */}
           <Link
             to="/vip"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             Voltar
           </Link>
-
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-6"
-          >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-warning flex items-center justify-center mx-auto mb-3">
-              <Crown className="w-5 h-5 text-background" />
-            </div>
-            <h1 className="text-lg font-bold">
-              {showSuccess ? "Pagamento Confirmado!" : showQRCode ? "Pague com PIX" : "Acesso VIP"}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              {showSuccess 
-                ? "Bem-vindo à área VIP!" 
-                : showQRCode 
-                  ? "Escaneie ou copie o código"
-                  : "Pagamento único • Acesso imediato"}
-            </p>
-          </motion.div>
 
           {/* Success */}
           {showSuccess && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-card border border-border rounded-xl p-6 text-center"
+              className="text-center py-8"
             >
-              <CheckCircle className="w-12 h-12 text-success mx-auto mb-3" />
-              <h2 className="font-bold mb-1">Acesso Liberado!</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Você já pode acessar todo o conteúdo exclusivo.
+              <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-success" />
+              </div>
+              <h1 className="text-xl font-bold mb-2">Pagamento Confirmado!</h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Seu acesso VIP já está liberado.
               </p>
               <Link to="/vip">
-                <Button className="btn-vip w-full">
-                  <Crown className="w-4 h-4 mr-2" />
+                <Button className="btn-vip">
                   Acessar Área VIP
                 </Button>
               </Link>
@@ -240,163 +222,143 @@ const CheckoutPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card border border-border rounded-xl p-5"
+              className="text-center"
             >
-              {/* Price */}
-              <div className="text-center mb-4">
-                <span className="text-2xl font-bold text-primary">R$ 97,00</span>
-              </div>
+              <h1 className="text-lg font-bold mb-1">Pague com PIX</h1>
+              <p className="text-xs text-muted-foreground mb-4">Escaneie o QR Code ou copie o código</p>
 
-              {/* QR Image */}
+              <div className="text-2xl font-bold text-primary mb-4">R$ 97,00</div>
+
               {paymentData.qrCodeImage && (
-                <div className="bg-white rounded-lg p-3 w-fit mx-auto mb-4">
+                <div className="bg-white rounded-xl p-4 w-fit mx-auto mb-4">
                   <img
                     src={`data:image/png;base64,${paymentData.qrCodeImage}`}
-                    alt="QR Code PIX"
-                    className="w-32 h-32 sm:w-40 sm:h-40"
+                    alt="QR Code"
+                    className="w-40 h-40"
                   />
                 </div>
               )}
 
-              {/* Code + Copy */}
-              <div className="space-y-2 mb-4">
-                <div className="bg-muted/50 rounded-lg p-2.5 text-[10px] font-mono text-muted-foreground break-all leading-relaxed">
-                  {paymentData.qrCode?.substring(0, 80)}...
-                </div>
-                <Button onClick={copyToClipboard} variant="outline" className="w-full h-9 text-xs">
-                  <Copy className="w-3.5 h-3.5 mr-1.5" />
-                  Copiar código PIX
+              <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                <p className="text-[10px] font-mono text-muted-foreground break-all">
+                  {paymentData.qrCode?.substring(0, 60)}...
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button onClick={copyToClipboard} variant="outline" className="flex-1">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar
+                </Button>
+                <Button
+                  onClick={checkPaymentStatus}
+                  disabled={isCheckingStatus}
+                  className="flex-1"
+                >
+                  {isCheckingStatus ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Verificar
+                    </>
+                  )}
                 </Button>
               </div>
 
-              {/* Check Status */}
-              <Button
-                onClick={checkPaymentStatus}
-                disabled={isCheckingStatus}
-                variant="secondary"
-                className="w-full h-9 text-xs"
-              >
-                {isCheckingStatus ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                    Verificar pagamento
-                  </>
-                )}
-              </Button>
-
-              <p className="text-[10px] text-center text-muted-foreground mt-3">
-                Status atualiza automaticamente após pagar
+              <p className="text-[10px] text-muted-foreground mt-4">
+                O acesso é liberado automaticamente após o pagamento
               </p>
             </motion.div>
           )}
 
           {/* Form */}
           {!showQRCode && !showSuccess && (
-            <div className="space-y-4">
-              {/* Price Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-primary/10 to-warning/10 border border-primary/20 rounded-xl p-4 text-center"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <span className="text-xs text-muted-foreground line-through">R$ 497</span>
-                  <span className="text-[10px] bg-success/20 text-success px-1.5 py-0.5 rounded font-medium">-80%</span>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              {/* Header */}
+              <div className="text-center mb-6">
+                <Crown className="w-10 h-10 text-primary mx-auto mb-3" />
+                <h1 className="text-xl font-bold">Acesso VIP</h1>
+              </div>
+
+              {/* Price */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 mb-1">
+                  <span className="text-sm text-muted-foreground line-through">R$ 497</span>
+                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium">80% OFF</span>
                 </div>
-                <span className="text-3xl font-bold text-primary">R$ 97</span>
-                <p className="text-[10px] text-muted-foreground mt-1">Pagamento único via PIX</p>
-              </motion.div>
+                <div className="text-4xl font-bold text-primary">R$ 97</div>
+                <p className="text-xs text-muted-foreground mt-1">Pagamento único</p>
+              </div>
 
               {/* Benefits */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="grid grid-cols-2 gap-2"
-              >
-                {benefits.map((b, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-card border border-border rounded-lg p-2.5">
-                    <b.icon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                    <span className="text-[11px]">{b.text}</span>
+              <div className="mb-6 space-y-2">
+                {benefits.map((benefit, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span className="text-sm">{benefit}</span>
                   </div>
                 ))}
-              </motion.div>
+              </div>
 
-              {/* Form Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-card border border-border rounded-xl p-4"
-              >
-                <h2 className="font-semibold text-sm mb-3">Seus dados</h2>
-
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="name" className="text-xs text-muted-foreground">Nome completo</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="João da Silva"
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email" className="text-xs text-muted-foreground">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="joao@email.com"
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cpf" className="text-xs text-muted-foreground">CPF</Label>
-                    <Input
-                      id="cpf"
-                      value={cpf}
-                      onChange={handleCPFChange}
-                      placeholder="000.000.000-00"
-                      maxLength={14}
-                      className="mt-1 h-10"
-                    />
-                  </div>
+              {/* Form */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <Label htmlFor="name" className="text-sm">Nome completo</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Seu nome"
+                    className="mt-1.5"
+                  />
                 </div>
 
-                <Button
-                  onClick={generatePixPayment}
-                  disabled={isLoading}
-                  className="btn-vip w-full mt-4 h-11"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Crown className="w-4 h-4 mr-2" />
-                      Gerar PIX
-                    </>
-                  )}
-                </Button>
-              </motion.div>
+                <div>
+                  <Label htmlFor="email" className="text-sm">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className="mt-1.5"
+                  />
+                </div>
 
-              {/* Security */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.15 }}
-                className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground"
+                <div>
+                  <Label htmlFor="cpf" className="text-sm">CPF</Label>
+                  <Input
+                    id="cpf"
+                    value={cpf}
+                    onChange={handleCPFChange}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={generatePixPayment}
+                disabled={isLoading}
+                className="btn-vip w-full h-12 text-base"
               >
-                <Shield className="w-3 h-3" />
-                <span>Pagamento seguro via TriboPay</span>
-              </motion.div>
-            </div>
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Gerar PIX"
+                )}
+              </Button>
+
+              <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
+                <Shield className="w-4 h-4" />
+                <span>Pagamento seguro</span>
+              </div>
+            </motion.div>
           )}
         </div>
       </div>
