@@ -26,7 +26,7 @@ export const Header = () => {
               <Crown className="w-5 h-5 text-background" />
             </div>
             <span className="font-display font-bold text-xl gradient-text-vip">
-              Async
+              Alta Cúpula
             </span>
           </Link>
 
