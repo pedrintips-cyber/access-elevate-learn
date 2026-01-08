@@ -211,18 +211,18 @@ const ProfilePage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="glass-card p-5 mb-6 relative overflow-hidden"
+                  className={`glass-card p-5 mb-6 relative overflow-hidden ${vipDaysRemaining <= 10 ? 'border-destructive/50' : ''}`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-warning/5 to-transparent" />
+                  <div className={`absolute inset-0 bg-gradient-to-r ${vipDaysRemaining <= 10 ? 'from-destructive/10 via-destructive/5' : 'from-primary/10 via-warning/5'} to-transparent`} />
                   <div className="relative flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-warning flex items-center justify-center flex-shrink-0">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${vipDaysRemaining <= 10 ? 'from-destructive to-destructive/70' : 'from-primary to-warning'} flex items-center justify-center flex-shrink-0`}>
                       <Crown className="w-7 h-7 text-background" />
                     </div>
                     <div className="flex-1">
                       <p className="font-display font-bold text-lg">Status VIP Ativo</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
+                        <Clock className={`w-4 h-4 ${vipDaysRemaining <= 10 ? 'text-destructive' : 'text-muted-foreground'}`} />
+                        <p className={`text-sm ${vipDaysRemaining <= 10 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
                           {vipDaysRemaining === 0 
                             ? "Expira hoje!" 
                             : vipDaysRemaining === 1 
@@ -232,17 +232,17 @@ const ProfilePage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-display font-bold text-primary">{vipDaysRemaining}</p>
+                      <p className={`text-3xl font-display font-bold ${vipDaysRemaining <= 10 ? 'text-destructive' : 'text-primary'}`}>{vipDaysRemaining}</p>
                       <p className="text-xs text-muted-foreground">dias</p>
                     </div>
                   </div>
-                  {vipDaysRemaining <= 7 && (
+                  {vipDaysRemaining <= 10 && (
                     <div className="mt-4 pt-4 border-t border-border/50">
                       <Link 
                         to="/checkout" 
-                        className="btn-vip w-full flex items-center justify-center text-sm"
+                        className="w-full flex items-center justify-center text-sm font-semibold py-3 px-4 rounded-xl bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground hover:opacity-90 transition-opacity"
                       >
-                        Renovar VIP
+                        🔥 Renovar VIP Agora
                       </Link>
                     </div>
                   )}

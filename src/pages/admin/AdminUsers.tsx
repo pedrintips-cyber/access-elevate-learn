@@ -128,7 +128,10 @@ export default function AdminUsers() {
 
   function getDaysRemaining(expiresAt: string | null) {
     if (!expiresAt) return null;
-    const days = differenceInDays(new Date(expiresAt), new Date());
+    const expiresDate = new Date(expiresAt);
+    const now = new Date();
+    const diffTime = expiresDate.getTime() - now.getTime();
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   }
 
