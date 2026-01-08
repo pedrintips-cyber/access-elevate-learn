@@ -141,76 +141,85 @@ const ToolsCategoryPage = () => {
               <p className="text-muted-foreground">Nenhuma ferramenta disponível nesta categoria ainda.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {tools.map((tool, index) => (
                 <motion.div
                   key={tool.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.08 }}
-                  className="glass-card p-4"
+                  className="glass-card overflow-hidden"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-6 h-6 text-primary" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground mb-1">{tool.title}</h3>
-                      {tool.description && (
-                        <p className="text-sm text-muted-foreground mb-3">{tool.description}</p>
-                      )}
-                      
-                      {tool.file_type && (
-                        <span className="inline-block px-2 py-0.5 bg-secondary text-xs text-muted-foreground rounded mb-3">
-                          {tool.file_type}
-                        </span>
-                      )}
-
-                      {tool.type === "script" && tool.content && (
-                        <div className="bg-muted/50 rounded-lg p-3 mb-3">
-                          <pre className="text-xs text-foreground/80 whitespace-pre-wrap break-words font-mono">
-                            {tool.content.length > 150 ? `${tool.content.slice(0, 150)}...` : tool.content}
-                          </pre>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2">
-                        {tool.type === "file" && tool.file_url && (
-                          <button
-                            onClick={() => handleDownload(tool.file_url!)}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                          >
-                            <Download className="w-4 h-4" />
-                            Baixar
-                          </button>
-                        )}
-
-                        {tool.type === "script" && tool.content && (
-                          <button
-                            onClick={() => handleCopy(tool.id, tool.content!)}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                          >
-                            {copiedId === tool.id ? (
-                              <Check className="w-4 h-4" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                            {copiedId === tool.id ? "Copiado!" : "Copiar"}
-                          </button>
-                        )}
-
-                        {tool.type === "link" && tool.external_url && (
-                          <button
-                            onClick={() => handleExternalLink(tool.external_url!)}
-                            className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Acessar
-                          </button>
+                  {/* Header com gradiente */}
+                  <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        {tool.type === "file" && <Download className="w-5 h-5 text-primary" />}
+                        {tool.type === "script" && <Copy className="w-5 h-5 text-primary" />}
+                        {tool.type === "link" && <ExternalLink className="w-5 h-5 text-primary" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{tool.title}</h3>
+                        {tool.file_type && (
+                          <span className="text-xs text-muted-foreground">{tool.file_type}</span>
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    {tool.description && (
+                      <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
+                    )}
+
+                    {tool.type === "script" && tool.content && (
+                      <div className="bg-muted rounded-lg p-3 mb-4 border border-border/50">
+                        <pre className="text-xs text-foreground/80 whitespace-pre-wrap break-words font-mono leading-relaxed">
+                          {tool.content.length > 200 ? `${tool.content.slice(0, 200)}...` : tool.content}
+                        </pre>
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    {tool.type === "file" && tool.file_url && (
+                      <button
+                        onClick={() => handleDownload(tool.file_url!)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        <Download className="w-4 h-4" />
+                        Baixar Arquivo
+                      </button>
+                    )}
+
+                    {tool.type === "script" && tool.content && (
+                      <button
+                        onClick={() => handleCopy(tool.id, tool.content!)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        {copiedId === tool.id ? (
+                          <>
+                            <Check className="w-4 h-4" />
+                            Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4" />
+                            Copiar Script
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {tool.type === "link" && tool.external_url && (
+                      <button
+                        onClick={() => handleExternalLink(tool.external_url!)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Acessar Link
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}
