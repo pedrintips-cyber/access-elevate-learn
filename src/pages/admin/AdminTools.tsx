@@ -58,6 +58,7 @@ export default function AdminTools() {
     category_id: "",
     order_index: 0,
     is_published: true,
+    instructions: "",
   });
 
   const { data: tools, isLoading } = useQuery({
@@ -143,11 +144,12 @@ export default function AdminTools() {
       category_id: "",
       order_index: 0,
       is_published: true,
+      instructions: "",
     });
     setEditingTool(null);
   };
 
-  const handleEdit = (tool: Tool) => {
+  const handleEdit = (tool: any) => {
     setEditingTool(tool);
     setFormData({
       title: tool.title,
@@ -160,6 +162,7 @@ export default function AdminTools() {
       category_id: tool.category_id || "",
       order_index: tool.order_index || 0,
       is_published: tool.is_published ?? true,
+      instructions: tool.instructions || "",
     });
     setIsOpen(true);
   };
@@ -300,6 +303,16 @@ export default function AdminTools() {
                   />
                 </div>
               )}
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Instruções de Uso</label>
+                <Textarea
+                  value={formData.instructions}
+                  onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                  placeholder="Explique passo a passo como usar essa ferramenta..."
+                  rows={5}
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

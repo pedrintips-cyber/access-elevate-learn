@@ -14,6 +14,7 @@ import VIPLessonPage from "./pages/VIPLessonPage";
 import VIPCategoryPage from "./pages/VIPCategoryPage";
 import ToolsPage from "./pages/ToolsPage";
 import ToolsCategoryPage from "./pages/ToolsCategoryPage";
+import ToolDetailPage from "./pages/ToolDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import CheckoutPage from "./pages/CheckoutPage";
 import LoginPage from "./pages/LoginPage";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/vip/lesson/:id" element={<VIPLessonPage />} />
             <Route path="/tools" element={<ToolsPage />} />
             <Route path="/tools/category/:id" element={<ToolsCategoryPage />} />
+            <Route path="/tools/:id" element={<ToolDetailPage />} />
             <Route path="/feed" element={<FeedPage />} />
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/profile" element={<ProfilePage />} />
