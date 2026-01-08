@@ -1,12 +1,12 @@
-import { Home, BookOpen, Rss, MessageSquare, User } from "lucide-react";
+import { Home, BookOpen, Wrench, Rss, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: BookOpen, label: "Aulas", path: "/free" },
+  { icon: Wrench, label: "Tools", path: "/tools" },
   { icon: Rss, label: "Feed", path: "/feed" },
-  { icon: MessageSquare, label: "Feedback", path: "/feedback" },
   { icon: User, label: "Perfil", path: "/profile" },
 ];
 
