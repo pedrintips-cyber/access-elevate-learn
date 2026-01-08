@@ -11,12 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const benefits = [
-  "Acesso a todos os módulos VIP",
-  "Mais de 50 aulas exclusivas",
-  "Scripts e templates prontos",
-  "Comunidade privada no Discord",
-  "Suporte prioritário",
-  "Atualizações gratuitas",
+  "Todos os módulos VIP",
+  "50+ aulas exclusivas",
+  "Scripts e templates",
+  "Comunidade privada",
 ];
 
 const VIP_PRICE_CENTS = 9700;
@@ -278,66 +276,60 @@ const CheckoutPage = () => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              {/* Header */}
-              <div className="text-center mb-6">
-                <Crown className="w-10 h-10 text-primary mx-auto mb-3" />
-                <h1 className="text-xl font-bold">Acesso VIP</h1>
-              </div>
-
-              {/* Price */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 mb-1">
-                  <span className="text-sm text-muted-foreground line-through">R$ 497</span>
-                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium">80% OFF</span>
+              {/* Header + Price */}
+              <div className="text-center mb-4">
+                <Crown className="w-8 h-8 text-primary mx-auto mb-2" />
+                <h1 className="text-lg font-bold">Acesso VIP</h1>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <span className="text-xs text-muted-foreground line-through">R$ 497</span>
+                  <span className="text-2xl font-bold text-primary">R$ 97</span>
                 </div>
-                <div className="text-4xl font-bold text-primary">R$ 97</div>
-                <p className="text-xs text-muted-foreground mt-1">Pagamento único</p>
               </div>
 
-              {/* Benefits */}
-              <div className="mb-6 space-y-2">
+              {/* Benefits - 2 cols */}
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-4 text-xs">
                 {benefits.map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span className="text-sm">{benefit}</span>
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Check className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span>{benefit}</span>
                   </div>
                 ))}
               </div>
 
               {/* Form */}
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-4">
                 <div>
-                  <Label htmlFor="name" className="text-sm">Nome completo</Label>
+                  <Label htmlFor="name" className="text-xs">Nome</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Seu nome"
-                    className="mt-1.5"
+                    className="mt-1 h-9 text-sm"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="email" className="text-sm">E-mail</Label>
+                  <Label htmlFor="email" className="text-xs">E-mail</Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
-                    className="mt-1.5"
+                    className="mt-1 h-9 text-sm"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="cpf" className="text-sm">CPF</Label>
+                  <Label htmlFor="cpf" className="text-xs">CPF</Label>
                   <Input
                     id="cpf"
                     value={cpf}
                     onChange={handleCPFChange}
                     placeholder="000.000.000-00"
                     maxLength={14}
-                    className="mt-1.5"
+                    className="mt-1 h-9 text-sm"
                   />
                 </div>
               </div>
@@ -345,17 +337,17 @@ const CheckoutPage = () => {
               <Button
                 onClick={generatePixPayment}
                 disabled={isLoading}
-                className="btn-vip w-full h-12 text-base"
+                className="btn-vip w-full h-10"
               >
                 {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   "Gerar PIX"
                 )}
               </Button>
 
-              <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
-                <Shield className="w-4 h-4" />
+              <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
+                <Shield className="w-3 h-3" />
                 <span>Pagamento seguro</span>
               </div>
             </motion.div>
