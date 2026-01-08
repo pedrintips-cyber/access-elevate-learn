@@ -132,8 +132,8 @@ const VIPLessonPage = () => {
   const getEmbedUrl = (url: string | null) => {
     if (!url) return null;
     
-    // YouTube
-    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+    // YouTube (includes m.youtube.com, www.youtube.com, youtube.com, youtu.be)
+    const youtubeMatch = url.match(/(?:(?:m\.|www\.)?youtube\.com\/watch\?v=|youtu\.be\/|(?:m\.|www\.)?youtube\.com\/embed\/)([^&\n?#]+)/);
     if (youtubeMatch) {
       return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
     }
