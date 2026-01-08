@@ -380,6 +380,7 @@ export type Database = {
           file_type: string | null
           file_url: string | null
           id: string
+          instructions: string | null
           is_published: boolean | null
           order_index: number | null
           title: string
@@ -394,6 +395,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          instructions?: string | null
           is_published?: boolean | null
           order_index?: number | null
           title: string
@@ -408,6 +410,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          instructions?: string | null
           is_published?: boolean | null
           order_index?: number | null
           title?: string

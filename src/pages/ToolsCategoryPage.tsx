@@ -1,11 +1,10 @@
-import { ArrowLeft, Wrench, Download, Copy, ExternalLink, Check, FileText } from "lucide-react";
+import { ArrowLeft, Wrench, Download, Copy, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface Category {
   id: string;
@@ -31,7 +30,6 @@ const ToolsCategoryPage = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isVIP) {
@@ -54,22 +52,6 @@ const ToolsCategoryPage = () => {
 
     fetchData();
   }, [id, isVIP, navigate]);
-
-  const handleCopy = (toolId: string, content: string) => {
-    navigator.clipboard.writeText(content);
-    setCopiedId(toolId);
-    toast.success("Copiado!");
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleDownload = (url: string) => {
-    window.open(url, "_blank");
-    toast.success("Download iniciado!");
-  };
-
-  const handleExternalLink = (url: string) => {
-    window.open(url, "_blank");
-  };
 
   if (!isVIP) {
     return null;
@@ -143,85 +125,29 @@ const ToolsCategoryPage = () => {
           ) : (
             <div className="grid gap-4">
               {tools.map((tool, index) => (
-                <motion.div
-                  key={tool.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08 }}
-                  className="glass-card overflow-hidden"
-                >
-                  {/* Header com gradiente */}
-                  <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                        {tool.type === "file" && <Download className="w-5 h-5 text-primary" />}
-                        {tool.type === "script" && <Copy className="w-5 h-5 text-primary" />}
-                        {tool.type === "link" && <ExternalLink className="w-5 h-5 text-primary" />}
+                <Link to={`/tools/${tool.id}`} key={tool.id}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                    className="glass-card p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                        {tool.type === "file" && <Download className="w-6 h-6 text-primary" />}
+                        {tool.type === "script" && <Copy className="w-6 h-6 text-primary" />}
+                        {tool.type === "link" && <ExternalLink className="w-6 h-6 text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground truncate">{tool.title}</h3>
-                        {tool.file_type && (
-                          <span className="text-xs text-muted-foreground">{tool.file_type}</span>
+                        <h3 className="font-semibold text-foreground mb-1">{tool.title}</h3>
+                        {tool.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{tool.description}</p>
                         )}
                       </div>
+                      <ArrowLeft className="w-5 h-5 text-muted-foreground rotate-180 flex-shrink-0" />
                     </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    {tool.description && (
-                      <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
-                    )}
-
-                    {tool.type === "script" && tool.content && (
-                      <div className="bg-muted rounded-lg p-3 mb-4 border border-border/50">
-                        <pre className="text-xs text-foreground/80 whitespace-pre-wrap break-words font-mono leading-relaxed">
-                          {tool.content.length > 200 ? `${tool.content.slice(0, 200)}...` : tool.content}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* Action Button */}
-                    {tool.type === "file" && tool.file_url && (
-                      <button
-                        onClick={() => handleDownload(tool.file_url!)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
-                      >
-                        <Download className="w-4 h-4" />
-                        Baixar Arquivo
-                      </button>
-                    )}
-
-                    {tool.type === "script" && tool.content && (
-                      <button
-                        onClick={() => handleCopy(tool.id, tool.content!)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
-                      >
-                        {copiedId === tool.id ? (
-                          <>
-                            <Check className="w-4 h-4" />
-                            Copiado!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4" />
-                            Copiar Script
-                          </>
-                        )}
-                      </button>
-                    )}
-
-                    {tool.type === "link" && tool.external_url && (
-                      <button
-                        onClick={() => handleExternalLink(tool.external_url!)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Acessar Link
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           )}
