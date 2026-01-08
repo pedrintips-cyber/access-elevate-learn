@@ -195,34 +195,34 @@ const CheckoutPage = () => {
 
   return (
     <Layout>
-      <div className="page-container">
-        <div className="content-container max-w-lg mx-auto">
+      <div className="page-container py-4">
+        <div className="content-container max-w-md mx-auto px-4">
           {/* Back Button */}
           <Link
             to="/vip"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             Voltar
           </Link>
 
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-5"
           >
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-warning flex items-center justify-center mx-auto mb-4">
-              <Crown className="w-10 h-10 text-background" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-warning flex items-center justify-center mx-auto mb-2">
+              <Crown className="w-6 h-6 text-background" />
             </div>
-            <h1 className="font-display text-3xl font-bold mb-2">
+            <h1 className="font-display text-xl font-bold mb-1">
               {showSuccess ? "Pagamento Confirmado!" : "Finalizar Compra"}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {showSuccess 
                 ? "Bem-vindo à área VIP!" 
                 : showQRCode 
-                  ? "Escaneie o QR Code ou copie o código PIX"
+                  ? "Escaneie o QR Code ou copie o código"
                   : "Preencha seus dados para gerar o PIX"}
             </p>
           </motion.div>
@@ -230,18 +230,18 @@ const CheckoutPage = () => {
           {/* Success State */}
           {showSuccess && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass-card p-8 text-center mb-6"
+              className="glass-card p-5 text-center mb-4"
             >
-              <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Acesso VIP Liberado!</h2>
-              <p className="text-muted-foreground mb-6">
+              <CheckCircle className="w-10 h-10 text-success mx-auto mb-3" />
+              <h2 className="text-base font-bold mb-1">Acesso VIP Liberado!</h2>
+              <p className="text-sm text-muted-foreground mb-4">
                 Seu pagamento foi confirmado e você já tem acesso a todo o conteúdo exclusivo.
               </p>
               <Link to="/vip">
-                <Button className="btn-vip">
-                  <Crown className="w-4 h-4 mr-2" />
+                <Button className="btn-vip" size="sm">
+                  <Crown className="w-3.5 h-3.5 mr-1.5" />
                   Acessar Área VIP
                 </Button>
               </Link>
@@ -251,37 +251,38 @@ const CheckoutPage = () => {
           {/* QR Code Display */}
           {showQRCode && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-6 mb-6"
+              className="glass-card p-4 mb-4"
             >
-              <div className="text-center mb-6">
-                <p className="text-2xl font-bold gradient-text-vip mb-1">R$ 97,00</p>
-                <p className="text-sm text-muted-foreground">Pagamento via PIX</p>
+              <div className="text-center mb-4">
+                <p className="text-xl font-bold gradient-text-vip">R$ 97,00</p>
+                <p className="text-xs text-muted-foreground">Pagamento via PIX</p>
               </div>
 
               {/* QR Code Image */}
               {paymentData.qrCodeImage && (
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-4">
                   <img
                     src={`data:image/png;base64,${paymentData.qrCodeImage}`}
                     alt="QR Code PIX"
-                    className="w-48 h-48 rounded-lg bg-white p-2"
+                    className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg bg-white p-1.5"
                   />
                 </div>
               )}
 
               {/* Copy Code Button */}
-              <div className="space-y-3">
-                <div className="p-3 bg-secondary rounded-lg break-all text-xs font-mono text-muted-foreground">
-                  {paymentData.qrCode?.substring(0, 80)}...
+              <div className="space-y-2">
+                <div className="p-2 bg-secondary rounded-lg break-all text-[10px] font-mono text-muted-foreground leading-tight">
+                  {paymentData.qrCode?.substring(0, 60)}...
                 </div>
                 <Button
                   onClick={copyToClipboard}
                   variant="outline"
+                  size="sm"
                   className="w-full"
                 >
-                  <Copy className="w-4 h-4 mr-2" />
+                  <Copy className="w-3.5 h-3.5 mr-1.5" />
                   Copiar Código PIX
                 </Button>
               </div>
@@ -290,18 +291,19 @@ const CheckoutPage = () => {
               <Button
                 onClick={checkPaymentStatus}
                 disabled={isCheckingStatus}
-                className="w-full mt-4"
+                className="w-full mt-3"
                 variant="secondary"
+                size="sm"
               >
                 {isCheckingStatus ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                 )}
                 Verificar Pagamento
               </Button>
 
-              <p className="text-xs text-muted-foreground text-center mt-4">
+              <p className="text-[10px] text-muted-foreground text-center mt-3">
                 O status será atualizado automaticamente após o pagamento
               </p>
             </motion.div>
@@ -312,32 +314,32 @@ const CheckoutPage = () => {
             <>
               {/* Order Summary */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="glass-card p-6 mb-6"
+                className="glass-card p-4 mb-4"
               >
-                <h2 className="font-semibold mb-4">Resumo do pedido</h2>
+                <h2 className="font-semibold text-sm mb-3">Resumo do pedido</h2>
                 
-                <div className="space-y-3 mb-6">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-4">
                   {benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                      <span className="text-sm">{benefit}</span>
+                    <div key={index} className="flex items-center gap-1.5">
+                      <CheckCircle className="w-3 h-3 text-success flex-shrink-0" />
+                      <span className="text-xs">{benefit}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-border pt-4">
-                  <div className="flex justify-between items-center mb-2">
+                <div className="border-t border-border pt-3 space-y-1">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="line-through text-muted-foreground">R$ 497,00</span>
                   </div>
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Desconto</span>
                     <span className="text-success">-80%</span>
                   </div>
-                  <div className="flex justify-between items-center text-lg font-bold">
+                  <div className="flex justify-between items-center text-base font-bold pt-1">
                     <span>Total</span>
                     <span className="gradient-text-vip">R$ 97,00</span>
                   </div>
@@ -346,46 +348,46 @@ const CheckoutPage = () => {
 
               {/* Form */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="glass-card p-6 mb-6"
+                className="glass-card p-4 mb-4"
               >
-                <h2 className="font-semibold mb-4">Seus Dados</h2>
+                <h2 className="font-semibold text-sm mb-3">Seus Dados</h2>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
-                    <Label htmlFor="name">Nome completo</Label>
+                    <Label htmlFor="name" className="text-xs">Nome completo</Label>
                     <Input
                       id="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="João da Silva"
-                      className="mt-1"
+                      className="mt-1 h-9 text-sm"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="email">E-mail</Label>
+                    <Label htmlFor="email" className="text-xs">E-mail</Label>
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="joao@email.com"
-                      className="mt-1"
+                      className="mt-1 h-9 text-sm"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="cpf">CPF</Label>
+                    <Label htmlFor="cpf" className="text-xs">CPF</Label>
                     <Input
                       id="cpf"
                       value={cpf}
                       onChange={handleCPFChange}
                       placeholder="000.000.000-00"
                       maxLength={14}
-                      className="mt-1"
+                      className="mt-1 h-9 text-sm"
                     />
                   </div>
                 </div>
@@ -393,13 +395,14 @@ const CheckoutPage = () => {
                 <Button
                   onClick={generatePixPayment}
                   disabled={isLoading}
-                  className="btn-vip w-full mt-6"
+                  className="btn-vip w-full mt-4"
+                  size="sm"
                 >
                   {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <Crown className="w-5 h-5 mr-2" />
+                      <Crown className="w-4 h-4 mr-1.5" />
                       Gerar PIX
                     </>
                   )}
@@ -410,12 +413,12 @@ const CheckoutPage = () => {
 
           {/* Security Badge */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center justify-center gap-3 text-muted-foreground text-sm"
+            className="flex items-center justify-center gap-2 text-muted-foreground text-xs"
           >
-            <Shield className="w-5 h-5" />
+            <Shield className="w-3.5 h-3.5" />
             <span>Pagamento 100% seguro via TriboPay</span>
           </motion.div>
         </div>
