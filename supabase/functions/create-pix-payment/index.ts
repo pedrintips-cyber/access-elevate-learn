@@ -6,10 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SYNCPAY_BASE_URL = 'https://api.syncpayments.com.br';
+
 interface PayerData {
   name: string;
   email: string;
   document: string;
+  phone?: string;
 }
 
 interface CreatePixRequest {
@@ -19,6 +22,56 @@ interface CreatePixRequest {
   userId?: string;
 }
 
+// Cache for access token
+let cachedToken: { token: string; expiresAt: Date } | null = null;
+
+async function getAccessToken(): Promise<string> {
+  // Check if we have a valid cached token
+  if (cachedToken && cachedToken.expiresAt > new Date()) {
+    console.log('Using cached SyncPay token');
+    return cachedToken.token;
+  }
+
+  const clientId = Deno.env.get('SYNCPAY_CLIENT_ID');
+  const clientSecret = Deno.env.get('SYNCPAY_CLIENT_SECRET');
+
+  if (!clientId || !clientSecret) {
+    throw new Error('SyncPay credentials not configured');
+  }
+
+  console.log('Requesting new SyncPay access token');
+
+  const response = await fetch(`${SYNCPAY_BASE_URL}/api/partner/v1/auth-token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error('SyncPay auth error:', data);
+    throw new Error('Failed to authenticate with SyncPay');
+  }
+
+  // Cache the token (subtract 5 minutes for safety margin)
+  const expiresAt = new Date();
+  expiresAt.setSeconds(expiresAt.getSeconds() + (data.expires_in - 300));
+  
+  cachedToken = {
+    token: data.access_token,
+    expiresAt,
+  };
+
+  console.log('SyncPay token obtained, expires at:', expiresAt.toISOString());
+  return data.access_token;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -26,15 +79,6 @@ serve(async (req) => {
   }
 
   try {
-    const tribopayToken = Deno.env.get('TRIBOPAY_TOKEN');
-    if (!tribopayToken) {
-      console.error('TRIBOPAY_TOKEN not configured');
-      return new Response(
-        JSON.stringify({ error: 'Token de pagamento não configurado' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -72,59 +116,73 @@ serve(async (req) => {
       );
     }
 
-    // Build postback URL
-    const postbackUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
+    // Get access token
+    const accessToken = await getAccessToken();
 
-    console.log('Creating PIX payment with TriboPay:', { amount, externalId, postbackUrl });
+    // Build webhook URL
+    const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
 
-    // Call TriboPay API
-    const tribopayResponse = await fetch('https://api.tribopay.com.br/api/public/cash/deposits/pix', {
+    // Convert amount from cents to reais (SyncPay expects reais)
+    const amountInReais = amount / 100;
+
+    console.log('Creating PIX payment with SyncPay:', { 
+      amount: amountInReais, 
+      externalId, 
+      webhookUrl 
+    });
+
+    // Call SyncPay API
+    const syncpayResponse = await fetch(`${SYNCPAY_BASE_URL}/api/partner/v1/cash-in`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${tribopayToken}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount,
-        externalId,
-        postbackUrl,
-        method: 'pix',
-        transactionOrigin: 'cashin',
-        payer: {
+        amount: amountInReais,
+        description: `Async VIP - ${externalId}`,
+        webhook_url: webhookUrl,
+        client: {
           name: payer.name.trim(),
+          cpf: cpfClean,
           email: payer.email.trim().toLowerCase(),
-          document: cpfClean,
+          phone: payer.phone?.replace(/\D/g, '') || '',
         },
       }),
     });
 
-    const tribopayData = await tribopayResponse.json();
-    console.log('TriboPay response:', tribopayResponse.status, tribopayData);
+    const syncpayData = await syncpayResponse.json();
+    console.log('SyncPay response:', syncpayResponse.status, syncpayData);
 
-    if (!tribopayResponse.ok) {
-      console.error('TriboPay error:', tribopayData);
+    if (!syncpayResponse.ok) {
+      console.error('SyncPay error:', syncpayData);
       
       let errorMessage = 'Erro ao criar pagamento PIX';
-      if (tribopayResponse.status === 401) {
+      if (syncpayResponse.status === 401) {
         errorMessage = 'Token de autenticação inválido';
-      } else if (tribopayResponse.status === 422) {
-        errorMessage = 'Dados inválidos: ' + (tribopayData.message || JSON.stringify(tribopayData));
-      } else if (tribopayResponse.status === 400) {
-        errorMessage = 'Requisição inválida: ' + (tribopayData.message || JSON.stringify(tribopayData));
+        // Clear cached token on auth error
+        cachedToken = null;
+      } else if (syncpayResponse.status === 422) {
+        errorMessage = 'Dados inválidos: ' + (syncpayData.message || JSON.stringify(syncpayData));
+      } else if (syncpayResponse.status === 400) {
+        errorMessage = 'Requisição inválida: ' + (syncpayData.message || JSON.stringify(syncpayData));
       }
 
       return new Response(
-        JSON.stringify({ error: errorMessage, details: tribopayData }),
-        { status: tribopayResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: errorMessage, details: syncpayData }),
+        { status: syncpayResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Extract PIX data from response - TriboPay returns it inside 'pix' object
-    const pixCode = tribopayData.pix?.code || tribopayData.pixCopiaECola || tribopayData.qrCode || null;
-    const pixImage = tribopayData.pix?.imageBase64 || tribopayData.imageBase64 || null;
+    // Extract PIX data from response
+    const pixCode = syncpayData.pix_code || null;
+    const syncpayId = syncpayData.identifier || null;
 
-    console.log('Extracted PIX data:', { pixCode: pixCode ? 'present' : 'missing', pixImage: pixImage ? 'present' : 'missing' });
+    console.log('Extracted PIX data:', { 
+      pixCode: pixCode ? 'present (' + pixCode.length + ' chars)' : 'missing', 
+      syncpayId 
+    });
 
     // Save transaction to database
     const { error: dbError } = await supabase
@@ -138,8 +196,8 @@ serve(async (req) => {
         payer_email: payer.email.trim().toLowerCase(),
         payer_document: cpfClean,
         qr_code: pixCode,
-        qr_code_image: pixImage,
-        tribopay_id: tribopayData.id || null,
+        qr_code_image: null, // SyncPay doesn't return image, will generate on frontend
+        tribopay_id: syncpayId, // Reusing field for SyncPay identifier
       });
 
     if (dbError) {
@@ -152,10 +210,10 @@ serve(async (req) => {
         success: true,
         externalId,
         qrCode: pixCode,
-        qrCodeImage: pixImage,
+        qrCodeImage: null,
         amount,
         status: 'waiting_payment',
-        tribopayId: tribopayData.id,
+        syncpayId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
