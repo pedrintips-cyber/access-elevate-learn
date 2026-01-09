@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Video, Eye, EyeOff, Link as LinkIcon, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Video, Eye, EyeOff, Link as LinkIcon, X, Upload, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface RelatedLink {
@@ -61,6 +62,12 @@ export default function AdminLessons() {
   // For adding related links
   const [linkType, setLinkType] = useState<"tool" | "lesson">("tool");
   const [selectedLinkId, setSelectedLinkId] = useState("");
+  
+  // Video upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [videoSource, setVideoSource] = useState<"url" | "upload">("url");
 
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["admin-lessons"],
@@ -178,6 +185,69 @@ export default function AdminLessons() {
     setEditingLessonId(null);
     setLinkType("tool");
     setSelectedLinkId("");
+    setVideoSource("url");
+    setUploadProgress(0);
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Formato de vídeo não suportado. Use MP4, WebM, MOV, AVI ou MPEG.");
+      return;
+    }
+    
+    // Validate file size (500MB max)
+    const maxSize = 500 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("O vídeo é muito grande. Tamanho máximo: 500MB");
+      return;
+    }
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      // Simulate progress since Supabase doesn't provide real progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 500);
+      
+      const { data, error } = await supabase.storage
+        .from('lesson-videos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      clearInterval(progressInterval);
+      
+      if (error) {
+        console.error('Upload error:', error);
+        toast.error("Erro ao fazer upload do vídeo: " + error.message);
+        setIsUploading(false);
+        return;
+      }
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('lesson-videos')
+        .getPublicUrl(data.path);
+      
+      setFormData(prev => ({ ...prev, video_url: urlData.publicUrl }));
+      setUploadProgress(100);
+      toast.success("Vídeo enviado com sucesso!");
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error("Erro ao fazer upload do vídeo");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -353,16 +423,105 @@ export default function AdminLessons() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">URL do Vídeo</label>
-                <Input
-                  value={formData.video_url}
-                  onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                  placeholder="https://..."
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Cole o link do YouTube, Vimeo ou qualquer player de vídeo
-                </p>
+              <div className="space-y-3">
+                <label className="text-sm font-medium block">Vídeo da Aula</label>
+                
+                {/* Video source toggle */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={videoSource === "url" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setVideoSource("url")}
+                  >
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Link Externo
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={videoSource === "upload" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setVideoSource("upload")}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Fazer Upload
+                  </Button>
+                </div>
+                
+                {videoSource === "url" ? (
+                  <div>
+                    <Input
+                      value={formData.video_url}
+                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cole o link do YouTube, Vimeo ou qualquer player de vídeo
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/mpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleVideoUpload(file);
+                      }}
+                      className="hidden"
+                    />
+                    
+                    {formData.video_url && uploadProgress === 100 ? (
+                      <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/30 rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-success" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-success">Vídeo enviado!</p>
+                          <p className="text-xs text-muted-foreground truncate">{formData.video_url}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormData({ ...formData, video_url: "" });
+                            setUploadProgress(0);
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : isUploading ? (
+                      <div className="space-y-2 p-4 border border-border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Enviando vídeo...</span>
+                        </div>
+                        <Progress value={uploadProgress} className="h-2" />
+                        <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
+                      </div>
+                    ) : (
+                      <div
+                        className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm font-medium">Clique para selecionar o vídeo</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          MP4, WebM, MOV, AVI ou MPEG • Máx. 500MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Show current video URL if set */}
+                {formData.video_url && videoSource === "url" && (
+                  <p className="text-xs text-success flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Vídeo configurado
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">URL da Thumbnail</label>
