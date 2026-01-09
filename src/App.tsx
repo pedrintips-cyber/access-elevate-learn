@@ -17,7 +17,6 @@ import ToolsCategoryPage from "./pages/ToolsCategoryPage";
 import ToolDetailPage from "./pages/ToolDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import CheckoutPage from "./pages/CheckoutPage";
-import RoulettePage from "./pages/RoulettePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFound from "./pages/NotFound";
@@ -61,7 +60,6 @@ const App = () => (
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/roleta" element={<RoulettePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             {/* Settings/Profile Routes */}
