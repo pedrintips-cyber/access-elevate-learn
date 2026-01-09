@@ -56,6 +56,7 @@ const FeedPage = () => {
       const { data: postsData, error } = await supabase
         .from("posts")
         .select("*")
+        .eq("is_approved", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

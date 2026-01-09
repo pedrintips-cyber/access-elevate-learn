@@ -1,21 +1,16 @@
-import { Crown, Star, Users, Zap, ArrowRight, CheckCircle, MessageCircle, Headphones, Shield } from "lucide-react";
+import { Crown, Users, Zap, ArrowRight, MessageCircle, Headphones, Star, Shield, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const benefits = [
-  { icon: Shield, text: "Acesso exclusivo à comunidade" },
-  { icon: Zap, text: "Conteúdos e estratégias premium" },
-  { icon: Users, text: "Networking com membros" },
-  { icon: Star, text: "Suporte prioritário" },
-];
-
-const stats = [
-  { number: "500+", label: "Membros" },
-  { number: "24/7", label: "Suporte" },
-  { number: "100%", label: "Exclusivo" },
+const networkBenefits = [
+  { icon: Users, text: "Networking com empreendedores de elite" },
+  { icon: Zap, text: "Scripts e estratégias exclusivas" },
+  { icon: Shield, text: "Suporte direto da equipe" },
+  { icon: Star, text: "Acesso a conteúdos premium" },
+  { icon: Sparkles, text: "Comunidade ativa 24/7" },
 ];
 
 const Home = () => {
@@ -31,65 +26,51 @@ const Home = () => {
     },
   });
 
-  const communityLinks = [
-    {
-      icon: MessageCircle,
-      title: "WhatsApp",
-      description: "Canal gratuito",
-      color: "from-green-500 to-green-600",
-      url: settings?.whatsapp_link || "#",
-    },
-    {
-      icon: Headphones,
-      title: "Discord",
-      description: "Comunidade ativa",
-      color: "from-indigo-500 to-purple-600",
-      url: settings?.discord_link || "#",
-    },
-  ];
-
   return (
     <Layout>
       <div className="page-container">
         {/* Hero Section */}
-        <section className="relative overflow-hidden min-h-[80vh] flex items-center">
-          {/* Background - Mais sutil */}
+        <section className="relative overflow-hidden min-h-[85vh] flex items-center">
+          {/* Background Effects */}
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/3 via-transparent to-background" />
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-background" />
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px]" />
+            <div className="absolute bottom-1/4 right-0 w-[200px] h-[200px] bg-warning/10 rounded-full blur-[80px]" />
           </div>
           
           <div className="content-container relative z-10 py-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6 }}
               className="text-center"
             >
-              {/* Badge - Menor */}
+              {/* Badge */}
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full mb-5"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full mb-6"
               >
-                <Crown className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-medium text-primary">Comunidade Exclusiva</span>
+                <Crown className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">Network de Elite</span>
               </motion.div>
 
-              {/* Main Title - Tamanhos menores */}
+              {/* Main Title */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="mb-4"
+                className="mb-6"
               >
-                <Crown className="w-12 h-12 md:w-14 md:h-14 text-primary mx-auto mb-4" />
-                <h1 className="font-display text-3xl md:text-5xl font-bold mb-2 leading-tight">
-                  <span className="gradient-text-vip">Async</span>
+                <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-primary to-warning flex items-center justify-center shadow-lg shadow-primary/30">
+                  <Crown className="w-10 h-10 text-background" />
+                </div>
+                <h1 className="font-display text-4xl md:text-6xl font-bold mb-3 leading-tight">
+                  <span className="gradient-text-vip">Alta Cúpula</span>
                 </h1>
-                <p className="text-base md:text-lg text-foreground/80 font-medium">
-                  Comunidade VIP de Elite
+                <p className="text-lg md:text-xl text-foreground/80 font-medium">
+                  O Network que vai mudar seu jogo
                 </p>
               </motion.div>
 
@@ -97,151 +78,167 @@ const Home = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-muted-foreground text-sm md:text-base mb-6 max-w-sm mx-auto leading-relaxed px-4"
+                className="text-muted-foreground text-base md:text-lg mb-8 max-w-md mx-auto leading-relaxed px-4"
               >
-                Faça parte de um grupo seleto com acesso a conteúdos exclusivos e suporte dedicado.
+                Faça parte do grupo mais exclusivo de empreendedores. Acesse scripts, estratégias e conecte-se com quem realmente faz acontecer.
               </motion.p>
 
-              {/* Community Links - Mais compactos */}
+              {/* Network Groups */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="grid grid-cols-2 gap-3 max-w-xs mx-auto mb-6"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto mb-8"
               >
-                {communityLinks.map((link, index) => (
-                  <motion.a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="glass-card p-3 flex flex-col items-center gap-2 group cursor-pointer border border-border/50 hover:border-primary/30 transition-all"
-                  >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${link.color} flex items-center justify-center`}>
-                      <link.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-center">
-                      <h3 className="font-semibold text-sm text-foreground">
-                        {link.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">{link.description}</p>
-                    </div>
-                  </motion.a>
-                ))}
+                {/* WhatsApp Group */}
+                <motion.a
+                  href={settings?.whatsapp_link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-card p-5 flex flex-col items-center gap-3 group cursor-pointer border border-green-500/30 hover:border-green-500/50 transition-all bg-gradient-to-br from-green-500/5 to-transparent"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                    <MessageCircle className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-bold text-base text-foreground mb-1">
+                      WhatsApp VIP
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Grupo exclusivo</p>
+                  </div>
+                  <span className="text-xs font-medium text-green-500 flex items-center gap-1">
+                    Entrar agora <ArrowRight className="w-3 h-3" />
+                  </span>
+                </motion.a>
+
+                {/* Discord Group */}
+                <motion.a
+                  href={settings?.discord_link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-card p-5 flex flex-col items-center gap-3 group cursor-pointer border border-indigo-500/30 hover:border-indigo-500/50 transition-all bg-gradient-to-br from-indigo-500/5 to-transparent"
+                >
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <Headphones className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-bold text-base text-foreground mb-1">
+                      Discord VIP
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Comunidade ativa</p>
+                  </div>
+                  <span className="text-xs font-medium text-indigo-500 flex items-center gap-1">
+                    Entrar agora <ArrowRight className="w-3 h-3" />
+                  </span>
+                </motion.a>
               </motion.div>
 
-              {/* CTA Button - Menor */}
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="mb-8"
-              >
-                <Link to="/checkout">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="btn-vip inline-flex items-center gap-2 text-sm px-6 py-3"
-                  >
-                    <Crown className="w-4 h-4" />
-                    Quero ser VIP
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.button>
-                </Link>
-              </motion.div>
-
-              {/* Stats - Mais compactos */}
+              {/* Stats */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.6 }}
-                className="grid grid-cols-3 gap-2 max-w-xs mx-auto"
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="grid grid-cols-3 gap-3 max-w-sm mx-auto"
               >
-                {stats.map((stat, index) => (
-                  <div 
-                    key={index} 
-                    className="glass-card p-3 text-center border border-border/50"
-                  >
-                    <p className="font-display text-lg md:text-xl font-bold text-primary">
-                      {stat.number}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  </div>
-                ))}
+                <div className="glass-card p-4 text-center border border-border/50">
+                  <p className="font-display text-2xl font-bold text-primary">500+</p>
+                  <p className="text-xs text-muted-foreground">Membros</p>
+                </div>
+                <div className="glass-card p-4 text-center border border-border/50">
+                  <p className="font-display text-2xl font-bold text-primary">24/7</p>
+                  <p className="text-xs text-muted-foreground">Suporte</p>
+                </div>
+                <div className="glass-card p-4 text-center border border-border/50">
+                  <p className="font-display text-2xl font-bold text-primary">VIP</p>
+                  <p className="text-xs text-muted-foreground">Exclusivo</p>
+                </div>
               </motion.div>
             </motion.div>
           </div>
         </section>
 
         {/* Benefits Section */}
-        <section className="content-container py-8">
+        <section className="content-container py-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
           >
-            <div className="text-center mb-6">
-              <h2 className="font-display text-xl md:text-2xl font-bold mb-1">
-                Por que a <span className="text-primary">Async</span>?
+            <div className="text-center mb-8">
+              <h2 className="font-display text-2xl md:text-3xl font-bold mb-2">
+                O que você ganha na <span className="text-primary">Alta Cúpula</span>
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Benefícios exclusivos para membros VIP
+              <p className="text-muted-foreground">
+                Regalias exclusivas para membros do network
               </p>
             </div>
 
-            <div className="grid gap-2">
-              {benefits.map((benefit, index) => (
+            <div className="grid gap-3 max-w-lg mx-auto">
+              {networkBenefits.map((benefit, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="glass-card p-3 flex items-center gap-3 border border-border/50"
+                  transition={{ duration: 0.3, delay: index * 0.08 }}
+                  className="glass-card p-4 flex items-center gap-4 border border-border/50 hover:border-primary/30 transition-colors"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="w-4 h-4 text-primary" />
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <benefit.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="text-sm font-medium text-foreground flex-1">{benefit.text}</span>
-                  <CheckCircle className="w-4 h-4 text-success" />
+                  <span className="text-sm font-medium text-foreground">{benefit.text}</span>
                 </motion.div>
               ))}
             </div>
           </motion.div>
         </section>
 
-        {/* Final CTA Section */}
-        <section className="content-container py-6 pb-6">
+        {/* CTA Section */}
+        <section className="content-container py-8 pb-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="glass-card p-6 text-center relative overflow-hidden border border-primary/20"
+            className="glass-card p-8 text-center relative overflow-hidden border border-primary/30"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-warning/5" />
             <div className="relative z-10">
-              <Crown className="w-10 h-10 text-primary mx-auto mb-3" />
-              <h2 className="font-display text-lg md:text-xl font-bold mb-2">
-                Entre para a <span className="text-primary">Async</span>
+              <Crown className="w-12 h-12 text-primary mx-auto mb-4" />
+              <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
+                Pronto para entrar na <span className="text-primary">Alta Cúpula</span>?
               </h2>
-              <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
-                Faça parte da comunidade VIP mais exclusiva
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                Escolha um dos grupos acima e faça parte do network que vai transformar seus resultados.
               </p>
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Link
-                  to="/checkout"
-                  className="btn-vip inline-flex items-center gap-2 text-sm px-6 py-3"
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <motion.a
+                  href={settings?.whatsapp_link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="btn-vip inline-flex items-center justify-center gap-2 px-6 py-3"
                 >
-                  Tornar-se VIP
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </motion.div>
+                  <MessageCircle className="w-4 h-4" />
+                  Entrar no WhatsApp
+                </motion.a>
+                <motion.a
+                  href={settings?.discord_link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/10 transition-colors font-medium"
+                >
+                  <Headphones className="w-4 h-4" />
+                  Entrar no Discord
+                </motion.a>
+              </div>
             </div>
           </motion.div>
         </section>
