@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import logoImage from "@/assets/logo.jpeg";
 
 const menuItems = [
   { label: "Home", path: "/" },
@@ -22,9 +23,11 @@ export const Header = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3 max-w-4xl mx-auto">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-warning flex items-center justify-center">
-              <Crown className="w-5 h-5 text-background" />
-            </div>
+            <img 
+              src={logoImage} 
+              alt="Alta Cúpula Logo" 
+              className="w-10 h-10 rounded-xl object-cover"
+            />
             <span className="font-display font-bold text-xl gradient-text-vip">
               Alta Cúpula
             </span>
