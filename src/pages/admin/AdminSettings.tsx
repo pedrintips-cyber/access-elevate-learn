@@ -31,9 +31,9 @@ export default function AdminSettings() {
       const { data, error } = await supabase
         .from("site_settings")
         .select("*")
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data as SiteSettings;
+      return data as SiteSettings | null;
     },
   });
 
