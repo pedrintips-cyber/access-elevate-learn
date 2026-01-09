@@ -6,9 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { label: "Home", path: "/" },
-  { label: "Conteúdo Gratuito", path: "/free" },
   { label: "Área VIP", path: "/vip" },
   { label: "Ferramentas", path: "/tools" },
+  { label: "Feed", path: "/feed" },
   { label: "Perfil", path: "/profile" },
 ];
 
