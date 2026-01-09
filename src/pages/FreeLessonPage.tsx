@@ -92,9 +92,18 @@ const FreeLessonPage = () => {
     );
   }
 
+  // Check if URL is a direct video file
+  const isDirectVideo = (url: string | null) => {
+    if (!url) return false;
+    return url.match(/\.(mp4|webm|mov|avi|mpeg)(\?.*)?$/i) !== null;
+  };
+
   // Get video embed URL
   const getEmbedUrl = (url: string | null) => {
     if (!url) return null;
+    
+    // If it's a direct video file, return null (we'll use <video> instead)
+    if (isDirectVideo(url)) return null;
     
     // YouTube (includes m.youtube.com, www.youtube.com, youtube.com, youtu.be)
     const youtubeMatch = url.match(/(?:(?:m\.|www\.)?youtube\.com\/watch\?v=|youtu\.be\/|(?:m\.|www\.)?youtube\.com\/embed\/)([^&\n?#]+)/);
@@ -112,6 +121,7 @@ const FreeLessonPage = () => {
   };
 
   const embedUrl = getEmbedUrl(lesson.video_url);
+  const showDirectVideo = isDirectVideo(lesson.video_url);
 
   return (
     <Layout>
@@ -132,7 +142,17 @@ const FreeLessonPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="aspect-video bg-muted rounded-2xl mb-6 flex items-center justify-center overflow-hidden relative"
           >
-            {embedUrl ? (
+            {showDirectVideo && lesson.video_url ? (
+              <video
+                src={lesson.video_url}
+                controls
+                className="w-full h-full object-contain bg-black"
+                controlsList="nodownload"
+                playsInline
+              >
+                Seu navegador não suporta a reprodução de vídeo.
+              </video>
+            ) : embedUrl ? (
               <iframe
                 src={embedUrl}
                 className="w-full h-full"
