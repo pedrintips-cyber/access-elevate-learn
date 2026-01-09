@@ -346,6 +346,44 @@ export type Database = {
         }
         Relationships: []
       }
+      roulette_spins: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          result: string
+          transaction_id: string | null
+          user_id: string
+          vip_days_won: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          result: string
+          transaction_id?: string | null
+          user_id: string
+          vip_days_won?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          result?: string
+          transaction_id?: string | null
+          user_id?: string
+          vip_days_won?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roulette_spins_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pix_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
           discord_link: string | null
