@@ -17,7 +17,7 @@ const benefits = [
   "Comunidade privada",
 ];
 
-const VIP_PRICE_CENTS = 9700;
+const VIP_PRICE_CENTS = 25000;
 
 const CheckoutPage = () => {
   const { user } = useAuth();
@@ -225,7 +225,7 @@ const CheckoutPage = () => {
               <h1 className="text-lg font-bold mb-1">Pague com PIX</h1>
               <p className="text-xs text-muted-foreground mb-4">Escaneie o QR Code ou copie o código</p>
 
-              <div className="text-2xl font-bold text-primary mb-4">R$ 97,00</div>
+              <div className="text-2xl font-bold text-primary mb-4">R$ 250,00</div>
 
               {paymentData.qrCodeImage && (
                 <div className="bg-white rounded-xl p-4 w-fit mx-auto mb-4">
@@ -282,7 +282,7 @@ const CheckoutPage = () => {
                 <h1 className="text-lg font-bold">Acesso VIP</h1>
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <span className="text-xs text-muted-foreground line-through">R$ 497</span>
-                  <span className="text-2xl font-bold text-primary">R$ 97</span>
+                  <span className="text-2xl font-bold text-primary">R$ 250</span>
                 </div>
               </div>
 

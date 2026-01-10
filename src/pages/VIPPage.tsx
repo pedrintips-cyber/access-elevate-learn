@@ -160,7 +160,7 @@ const VIPPage = () => {
                       <div className="flex items-baseline justify-center gap-1 mb-2">
                         <span className="text-muted-foreground">Por apenas</span>
                         <span className="font-display text-5xl font-bold gradient-text-vip">
-                          R$ 97
+                          R$ 250
                         </span>
                         <span className="text-muted-foreground">,00</span>
                       </div>
