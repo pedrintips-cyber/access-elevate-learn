@@ -143,6 +143,16 @@ serve(async (req) => {
       clientData.phone = payer.phone.replace(/\D/g, '');
     }
 
+    // Build request body
+    const requestBody = {
+      amount: amountInReais,
+      description: `Async VIP - ${externalId}`,
+      webhook_url: webhookUrl,
+      client: clientData,
+    };
+
+    console.log('SyncPay request body:', JSON.stringify(requestBody, null, 2));
+
     // Call SyncPay API
     const syncpayResponse = await fetch(`${SYNCPAY_BASE_URL}/api/partner/v1/cash-in`, {
       method: 'POST',
@@ -151,12 +161,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        amount: amountInReais,
-        description: `Async VIP - ${externalId}`,
-        webhook_url: webhookUrl,
-        client: clientData,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const syncpayData = await syncpayResponse.json();
