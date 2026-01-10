@@ -94,12 +94,9 @@ const CheckoutPage = () => {
     setIsLoading(true);
 
     try {
-      const externalId = `vip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
       const { data, error } = await supabase.functions.invoke('create-pix-payment', {
         body: {
           amount: VIP_PRICE_CENTS,
-          externalId,
           payer: {
             name: name.trim(),
             email: email.trim().toLowerCase(),
@@ -121,10 +118,10 @@ const CheckoutPage = () => {
       }
 
       setPaymentData({
-        qrCode: data.qrCode,
+        qrCode: data.pixCode,
         qrCodeImage: data.qrCodeImage,
         externalId: data.externalId,
-        status: data.status,
+        status: 'waiting_payment',
       });
 
       toast.success("PIX gerado com sucesso!");
@@ -230,7 +227,7 @@ const CheckoutPage = () => {
               {paymentData.qrCodeImage && (
                 <div className="bg-white rounded-xl p-4 w-fit mx-auto mb-4">
                   <img
-                    src={`data:image/png;base64,${paymentData.qrCodeImage}`}
+                    src={paymentData.qrCodeImage}
                     alt="QR Code"
                     className="w-40 h-40"
                   />

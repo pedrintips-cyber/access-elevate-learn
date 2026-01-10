@@ -18,43 +18,40 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const webhookData = await req.json();
-    console.log('PIX Webhook received from SyncPay:', JSON.stringify(webhookData, null, 2));
+    console.log('BuckPay Webhook received:', JSON.stringify(webhookData, null, 2));
 
-    // SyncPay webhook payload structure
-    // Extract identifier (used as our external_id reference via tribopay_id column)
-    const identifier = webhookData.identifier || webhookData.id;
-    const status = webhookData.status;
-    const endToEndId = webhookData.end_to_end_id || webhookData.endToEndId;
-
-    if (!identifier) {
-      console.error('Webhook missing identifier');
+    // BuckPay webhook payload structure
+    const event = webhookData.event;
+    const data = webhookData.data;
+    
+    if (!data?.id) {
+      console.error('Webhook missing transaction id');
       return new Response(
-        JSON.stringify({ error: 'Missing identifier' }),
+        JSON.stringify({ error: 'Missing transaction id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Map SyncPay status to our status
+    const buckpayId = data.id;
+    const status = data.status;
+
+    // Map BuckPay status to our status
     let mappedStatus = status;
-    if (status === 'completed' || status === 'approved' || status === 'confirmed') {
+    if (status === 'paid' || event === 'transaction.processed') {
       mappedStatus = 'paid';
-    } else if (status === 'pending' || status === 'processing') {
+    } else if (status === 'pending' || event === 'transaction.created') {
       mappedStatus = 'waiting_payment';
     } else if (status === 'expired' || status === 'cancelled' || status === 'failed') {
       mappedStatus = 'expired';
     }
 
-    console.log(`Updating transaction with SyncPay ID ${identifier} to status: ${mappedStatus}`);
+    console.log(`Updating transaction with BuckPay ID ${buckpayId} to status: ${mappedStatus}`);
 
-    // Update transaction status using the tribopay_id field (stores SyncPay identifier)
+    // Update transaction status using the tribopay_id field (stores BuckPay ID)
     const updateData: Record<string, unknown> = {
       status: mappedStatus,
       updated_at: new Date().toISOString(),
     };
-
-    if (endToEndId) {
-      updateData.end_to_end_id = endToEndId;
-    }
 
     if (mappedStatus === 'paid') {
       updateData.paid_at = new Date().toISOString();
@@ -63,38 +60,45 @@ serve(async (req) => {
     const { data: transaction, error: updateError } = await supabase
       .from('pix_transactions')
       .update(updateData)
-      .eq('tribopay_id', identifier)
+      .eq('tribopay_id', buckpayId)
       .select('user_id, amount')
       .single();
 
     if (updateError) {
       console.error('Error updating transaction:', updateError);
       
-      // Try to find by external_id as fallback
-      console.log('Trying to find transaction by external_id...');
-      const { data: txByExternal, error: fallbackError } = await supabase
-        .from('pix_transactions')
-        .update(updateData)
-        .eq('external_id', identifier)
-        .select('user_id, amount')
-        .single();
+      // Try to find by external_id as fallback (if external_id was sent)
+      if (data.external_id) {
+        console.log('Trying to find transaction by external_id...');
+        const { data: txByExternal, error: fallbackError } = await supabase
+          .from('pix_transactions')
+          .update(updateData)
+          .eq('external_id', data.external_id)
+          .select('user_id, amount')
+          .single();
 
-      if (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
+        if (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to update transaction' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Use fallback result
+        if (mappedStatus === 'paid' && txByExternal?.user_id) {
+          await activateVip(supabase, txByExternal.user_id);
+        }
+
         return new Response(
-          JSON.stringify({ error: 'Failed to update transaction' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: true, buckpayId, status: mappedStatus }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Use fallback result
-      if (mappedStatus === 'paid' && txByExternal?.user_id) {
-        await activateVip(supabase, txByExternal.user_id);
-      }
-
       return new Response(
-        JSON.stringify({ success: true, identifier, status: mappedStatus }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to update transaction' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -106,7 +110,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, identifier, status: mappedStatus }),
+      JSON.stringify({ success: true, buckpayId, status: mappedStatus }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SYNCPAY_BASE_URL = 'https://api.syncpayments.com.br';
+const BUCKPAY_API_URL = 'https://api.realtechdev.com.br';
 
 interface PayerData {
   name: string;
@@ -16,60 +16,9 @@ interface PayerData {
 }
 
 interface CreatePixRequest {
-  amount: number; // in cents
-  externalId: string;
+  amount: number;
   payer: PayerData;
   userId?: string;
-}
-
-// Cache for access token
-let cachedToken: { token: string; expiresAt: Date } | null = null;
-
-async function getAccessToken(): Promise<string> {
-  // Check if we have a valid cached token
-  if (cachedToken && cachedToken.expiresAt > new Date()) {
-    console.log('Using cached SyncPay token');
-    return cachedToken.token;
-  }
-
-  const clientId = Deno.env.get('SYNCPAY_CLIENT_ID');
-  const clientSecret = Deno.env.get('SYNCPAY_CLIENT_SECRET');
-
-  if (!clientId || !clientSecret) {
-    throw new Error('SyncPay credentials not configured');
-  }
-
-  console.log('Requesting new SyncPay access token');
-
-  const response = await fetch(`${SYNCPAY_BASE_URL}/api/partner/v1/auth-token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('SyncPay auth error:', data);
-    throw new Error('Failed to authenticate with SyncPay');
-  }
-
-  // Cache the token (subtract 5 minutes for safety margin)
-  const expiresAt = new Date();
-  expiresAt.setSeconds(expiresAt.getSeconds() + (data.expires_in - 300));
-  
-  cachedToken = {
-    token: data.access_token,
-    expiresAt,
-  };
-
-  console.log('SyncPay token obtained, expires at:', expiresAt.toISOString());
-  return data.access_token;
 }
 
 serve(async (req) => {
@@ -81,147 +30,135 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const buckpayToken = Deno.env.get('BUCKPAY_TOKEN');
+    const buckpayUserAgent = Deno.env.get('BUCKPAY_USER_AGENT');
+    
+    if (!buckpayToken || !buckpayUserAgent) {
+      console.error('Missing BuckPay credentials');
+      return new Response(
+        JSON.stringify({ error: 'Payment service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { amount, externalId, payer, userId }: CreatePixRequest = await req.json();
+    const body: CreatePixRequest = await req.json();
+    console.log('Received payment request:', JSON.stringify(body, null, 2));
 
-    // Validations
-    if (!amount || amount < 100) {
+    // Validate required fields
+    if (!body.amount || body.amount <= 0) {
       return new Response(
-        JSON.stringify({ error: 'Valor mínimo é R$ 1,00 (100 centavos)' }),
+        JSON.stringify({ error: 'Invalid amount' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!payer.name || payer.name.trim().length < 3) {
+    if (!body.payer?.name || !body.payer?.email || !body.payer?.document) {
       return new Response(
-        JSON.stringify({ error: 'Nome inválido' }),
+        JSON.stringify({ error: 'Missing payer information' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!payer.email || !emailRegex.test(payer.email)) {
-      return new Response(
-        JSON.stringify({ error: 'E-mail inválido' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Generate external ID
+    const externalId = `vip_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-    const cpfClean = payer.document.replace(/\D/g, '');
-    if (cpfClean.length !== 11) {
-      return new Response(
-        JSON.stringify({ error: 'CPF deve ter 11 dígitos' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Create PIX payment with BuckPay API
+    console.log('Creating PIX payment with BuckPay...');
+    
+    const buckpayPayload = {
+      external_id: externalId,
+      payment_method: 'pix',
+      amount: body.amount, // Amount in cents
+      buyer: {
+        name: body.payer.name,
+        email: body.payer.email,
+        document: body.payer.document.replace(/\D/g, ''), // Remove non-digits
+        phone: body.payer.phone || undefined
+      },
+      product: {
+        id: 'vip_access',
+        name: 'Acesso VIP'
+      }
+    };
 
-    // Get access token
-    const accessToken = await getAccessToken();
+    console.log('BuckPay payload:', JSON.stringify(buckpayPayload, null, 2));
 
-    // Build webhook URL
-    const webhookUrl = `${supabaseUrl}/functions/v1/pix-webhook`;
-
-    // Convert amount from cents to reais (SyncPay expects reais)
-    const amountInReais = amount / 100;
-
-    console.log('Creating PIX payment with SyncPay:', { 
-      amount: amountInReais, 
-      externalId, 
-      webhookUrl 
-    });
-
-    // Call SyncPay API
-    const syncpayResponse = await fetch(`${SYNCPAY_BASE_URL}/api/partner/v1/cash-in`, {
+    const buckpayResponse = await fetch(`${BUCKPAY_API_URL}/v1/transactions`, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${buckpayToken}`,
+        'User-Agent': buckpayUserAgent
       },
-      body: JSON.stringify({
-        amount: amountInReais,
-        description: `Async VIP - ${externalId}`,
-        webhook_url: webhookUrl,
-        client: {
-          name: payer.name.trim(),
-          cpf: cpfClean,
-          email: payer.email.trim().toLowerCase(),
-          phone: payer.phone?.replace(/\D/g, '') || '',
-        },
-      }),
+      body: JSON.stringify(buckpayPayload)
     });
 
-    const syncpayData = await syncpayResponse.json();
-    console.log('SyncPay response:', syncpayResponse.status, syncpayData);
+    const buckpayData = await buckpayResponse.json();
+    console.log('BuckPay response:', JSON.stringify(buckpayData, null, 2));
 
-    if (!syncpayResponse.ok) {
-      console.error('SyncPay error:', syncpayData);
-      
-      let errorMessage = 'Erro ao criar pagamento PIX';
-      if (syncpayResponse.status === 401) {
-        errorMessage = 'Token de autenticação inválido';
-        // Clear cached token on auth error
-        cachedToken = null;
-      } else if (syncpayResponse.status === 422) {
-        errorMessage = 'Dados inválidos: ' + (syncpayData.message || JSON.stringify(syncpayData));
-      } else if (syncpayResponse.status === 400) {
-        errorMessage = 'Requisição inválida: ' + (syncpayData.message || JSON.stringify(syncpayData));
-      }
-
+    if (!buckpayResponse.ok) {
+      console.error('BuckPay API error:', buckpayData);
       return new Response(
-        JSON.stringify({ error: errorMessage, details: syncpayData }),
-        { status: syncpayResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          error: 'Payment creation failed', 
+          details: buckpayData.error?.message || 'Unknown error'
+        }),
+        { status: buckpayResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Extract PIX data from response
-    const pixCode = syncpayData.pix_code || null;
-    const syncpayId = syncpayData.identifier || null;
+    // Extract PIX data from BuckPay response
+    const pixCode = buckpayData.data?.pix?.code;
+    const qrCodeBase64 = buckpayData.data?.pix?.qrcode_base64;
+    const buckpayId = buckpayData.data?.id;
 
-    console.log('Extracted PIX data:', { 
-      pixCode: pixCode ? 'present (' + pixCode.length + ' chars)' : 'missing', 
-      syncpayId 
-    });
+    if (!pixCode) {
+      console.error('No PIX code in response');
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate PIX code' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Save transaction to database
-    const { error: dbError } = await supabase
+    const { error: insertError } = await supabase
       .from('pix_transactions')
       .insert({
         external_id: externalId,
-        user_id: userId || null,
-        amount,
+        tribopay_id: buckpayId, // Reusing this column for BuckPay ID
+        user_id: body.userId || null,
+        amount: body.amount,
         status: 'waiting_payment',
-        payer_name: payer.name.trim(),
-        payer_email: payer.email.trim().toLowerCase(),
-        payer_document: cpfClean,
+        payer_name: body.payer.name,
+        payer_email: body.payer.email,
+        payer_document: body.payer.document,
         qr_code: pixCode,
-        qr_code_image: null, // SyncPay doesn't return image, will generate on frontend
-        tribopay_id: syncpayId, // Reusing field for SyncPay identifier
+        qr_code_image: qrCodeBase64 ? `data:image/png;base64,${qrCodeBase64}` : null
       });
 
-    if (dbError) {
-      console.error('Database error:', dbError);
-      // Don't fail the request, payment was created
+    if (insertError) {
+      console.error('Error saving transaction:', insertError);
+      // Continue anyway - payment was created
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         externalId,
-        qrCode: pixCode,
-        qrCodeImage: null,
-        amount,
-        status: 'waiting_payment',
-        syncpayId,
+        pixCode,
+        qrCodeImage: qrCodeBase64 ? `data:image/png;base64,${qrCodeBase64}` : null,
+        amount: body.amount
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error creating PIX payment:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: 'Erro interno ao processar pagamento' }),
+      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
