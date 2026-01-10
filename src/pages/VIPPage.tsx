@@ -154,15 +154,18 @@ const VIPPage = () => {
                     </div>
 
                     <div className="text-center mb-8 p-6 bg-secondary/30 rounded-2xl">
+                      <div className="text-muted-foreground text-sm line-through mb-1">
+                        De R$ 497,00
+                      </div>
                       <div className="flex items-baseline justify-center gap-1 mb-2">
                         <span className="text-muted-foreground">Por apenas</span>
                         <span className="font-display text-5xl font-bold gradient-text-vip">
-                          R$ 250
+                          R$ 97
                         </span>
                         <span className="text-muted-foreground">,00</span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Pagamento único • 30 dias de acesso
+                        Pagamento único • Acesso vitalício
                       </p>
                     </div>
 

@@ -11,7 +11,7 @@ const SYNCPAY_BASE_URL = 'https://api.syncpayments.com.br';
 interface PayerData {
   name: string;
   email: string;
-  document?: string;
+  document: string;
   phone?: string;
 }
 
@@ -108,11 +108,10 @@ serve(async (req) => {
       );
     }
 
-    // CPF is required by SyncPay
-    const cpfClean = payer.document?.replace(/\D/g, '') || '';
-    if (!cpfClean || cpfClean.length !== 11) {
+    const cpfClean = payer.document.replace(/\D/g, '');
+    if (cpfClean.length !== 11) {
       return new Response(
-        JSON.stringify({ error: 'CPF é obrigatório e deve ter 11 dígitos' }),
+        JSON.stringify({ error: 'CPF deve ter 11 dígitos' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -132,27 +131,6 @@ serve(async (req) => {
       webhookUrl 
     });
 
-    // Build client object - CPF is required
-    const clientData: Record<string, string> = {
-      name: payer.name.trim(),
-      cpf: cpfClean,
-      email: payer.email.trim().toLowerCase(),
-    };
-    
-    if (payer.phone) {
-      clientData.phone = payer.phone.replace(/\D/g, '');
-    }
-
-    // Build request body
-    const requestBody = {
-      amount: amountInReais,
-      description: `Async VIP - ${externalId}`,
-      webhook_url: webhookUrl,
-      client: clientData,
-    };
-
-    console.log('SyncPay request body:', JSON.stringify(requestBody, null, 2));
-
     // Call SyncPay API
     const syncpayResponse = await fetch(`${SYNCPAY_BASE_URL}/api/partner/v1/cash-in`, {
       method: 'POST',
@@ -161,7 +139,17 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        amount: amountInReais,
+        description: `Async VIP - ${externalId}`,
+        webhook_url: webhookUrl,
+        client: {
+          name: payer.name.trim(),
+          cpf: cpfClean,
+          email: payer.email.trim().toLowerCase(),
+          phone: payer.phone?.replace(/\D/g, '') || '',
+        },
+      }),
     });
 
     const syncpayData = await syncpayResponse.json();
@@ -206,7 +194,7 @@ serve(async (req) => {
         status: 'waiting_payment',
         payer_name: payer.name.trim(),
         payer_email: payer.email.trim().toLowerCase(),
-        payer_document: cpfClean || 'N/A',
+        payer_document: cpfClean,
         qr_code: pixCode,
         qr_code_image: null, // SyncPay doesn't return image, will generate on frontend
         tribopay_id: syncpayId, // Reusing field for SyncPay identifier

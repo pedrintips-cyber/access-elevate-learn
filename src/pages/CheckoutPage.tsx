@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { Crown, Shield, CheckCircle, ArrowLeft, Copy, Loader2, RefreshCw, Check, QrCode } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Crown, Shield, CheckCircle, ArrowLeft, Copy, Loader2, RefreshCw, Check } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const benefits = [
   "Todos os módulos VIP",
@@ -16,23 +17,12 @@ const benefits = [
   "Comunidade privada",
 ];
 
-const VIP_PRICE_CENTS = 25000;
-
-const formatCPF = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-};
+const VIP_PRICE_CENTS = 9700;
 
 const CheckoutPage = () => {
-  const { user, profile } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [cpf, setCpf] = useState("");
   const [paymentData, setPaymentData] = useState<{
     qrCode: string;
     qrCodeImage: string;
@@ -40,16 +30,64 @@ const CheckoutPage = () => {
     status: string;
   } | null>(null);
 
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
+
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+  };
+
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCpf(formatCPF(e.target.value));
+  };
+
+  const validateCPF = (cpf: string): boolean => {
+    const numbers = cpf.replace(/\D/g, "");
+    if (numbers.length !== 11) return false;
+    if (/^(\d)\1+$/.test(numbers)) return false;
+    
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(numbers[i]) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(numbers[9])) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(numbers[i]) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    return remainder === parseInt(numbers[10]);
+  };
+
   const generatePixPayment = async () => {
-    if (!user) {
-      toast.error("Faça login para continuar");
-      navigate("/login");
+    if (!name.trim() || name.trim().length < 3) {
+      toast.error("Informe um nome válido");
       return;
     }
 
-    const cpfClean = cpf.replace(/\D/g, '');
-    if (cpfClean.length !== 11) {
-      toast.error("Digite um CPF válido com 11 dígitos");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Informe um e-mail válido");
+      return;
+    }
+
+    if (!validateCPF(cpf)) {
+      toast.error("CPF inválido");
       return;
     }
 
@@ -63,11 +101,11 @@ const CheckoutPage = () => {
           amount: VIP_PRICE_CENTS,
           externalId,
           payer: {
-            name: profile?.full_name || user.email?.split('@')[0] || 'Cliente',
-            email: user.email || '',
-            document: cpfClean,
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            document: cpf.replace(/\D/g, ""),
           },
-          userId: user.id,
+          userId: user?.id || null,
         },
       });
 
@@ -78,7 +116,6 @@ const CheckoutPage = () => {
       }
 
       if (data.error) {
-        console.error('API Error:', data.error, data.details);
         toast.error(data.error);
         return;
       }
@@ -90,7 +127,7 @@ const CheckoutPage = () => {
         status: data.status,
       });
 
-      toast.success("PIX gerado!");
+      toast.success("PIX gerado com sucesso!");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Erro ao processar pagamento");
@@ -117,7 +154,7 @@ const CheckoutPage = () => {
       const statusData = await response.json();
 
       if (statusData.status === 'paid') {
-        toast.success("Pagamento confirmado! Seu VIP foi ativado!");
+        toast.success("Pagamento confirmado! Seu acesso VIP foi ativado!");
         setPaymentData(prev => prev ? { ...prev, status: 'paid' } : null);
       } else if (statusData.status === 'failed' || statusData.status === 'cancelled') {
         toast.error("Pagamento falhou ou foi cancelado");
@@ -136,20 +173,17 @@ const CheckoutPage = () => {
   const copyToClipboard = () => {
     if (paymentData?.qrCode) {
       navigator.clipboard.writeText(paymentData.qrCode);
-      setCopied(true);
-      toast.success("Chave PIX copiada!");
-      setTimeout(() => setCopied(false), 2000);
+      toast.success("Código copiado!");
     }
   };
 
   const showQRCode = paymentData && paymentData.status !== 'paid';
   const showSuccess = paymentData?.status === 'paid';
-  const showCPFForm = user && !paymentData && !isLoading;
 
   return (
     <Layout>
       <div className="min-h-screen py-6 px-4">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-sm mx-auto">
           {/* Back */}
           <Link
             to="/vip"
@@ -164,238 +198,158 @@ const CheckoutPage = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-12"
+              className="text-center py-8"
             >
-              <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-500" />
+              <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-success" />
               </div>
-              <h1 className="text-2xl font-bold mb-3">Pagamento Confirmado!</h1>
-              <p className="text-muted-foreground mb-8">
-                Parabéns! Seu acesso VIP está liberado por 30 dias.
+              <h1 className="text-xl font-bold mb-2">Pagamento Confirmado!</h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Seu acesso VIP já está liberado.
               </p>
               <Link to="/vip">
-                <Button className="btn-vip px-8">
-                  <Crown className="w-4 h-4 mr-2" />
+                <Button className="btn-vip">
                   Acessar Área VIP
                 </Button>
               </Link>
             </motion.div>
           )}
 
-          {/* Loading State */}
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-16"
-            >
-              <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">Gerando pagamento...</p>
-            </motion.div>
-          )}
-
-          {/* CPF Form */}
-          {showCPFForm && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              {/* Header */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
-                  <Crown className="w-7 h-7 text-primary" />
-                </div>
-                <h1 className="text-xl font-bold mb-1">Acesso VIP</h1>
-                <p className="text-muted-foreground text-sm">30 dias de conteúdo exclusivo</p>
-              </div>
-
-              {/* Price Card */}
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-6 mb-6 text-center border border-primary/20">
-                <span className="text-sm text-muted-foreground">Valor único</span>
-                <div className="text-4xl font-bold text-primary mt-1">R$ 250,00</div>
-                <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                  {benefits.map((benefit, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <Check className="w-3 h-3 text-primary flex-shrink-0" />
-                      <span>{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* CPF Input */}
-              <div className="bg-card rounded-2xl p-4 mb-4 border">
-                <label className="block text-sm font-medium mb-2">
-                  Digite seu CPF para gerar o PIX
-                </label>
-                <Input
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={(e) => setCpf(formatCPF(e.target.value))}
-                  className="text-center text-lg tracking-wider"
-                  maxLength={14}
-                />
-              </div>
-
-              <Button
-                onClick={generatePixPayment}
-                disabled={cpf.replace(/\D/g, '').length !== 11}
-                className="w-full btn-vip h-12"
-              >
-                <QrCode className="w-4 h-4 mr-2" />
-                Gerar PIX
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground mt-4 flex items-center justify-center gap-1.5">
-                <Shield className="w-3 h-3" />
-                Pagamento seguro via PIX
-              </p>
-            </motion.div>
-          )}
-
-          {/* QR Code Payment Screen */}
+          {/* QR Code */}
           {showQRCode && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
+              className="text-center"
             >
-              {/* Header */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
-                  <Crown className="w-7 h-7 text-primary" />
+              <h1 className="text-lg font-bold mb-1">Pague com PIX</h1>
+              <p className="text-xs text-muted-foreground mb-4">Escaneie o QR Code ou copie o código</p>
+
+              <div className="text-2xl font-bold text-primary mb-4">R$ 97,00</div>
+
+              {paymentData.qrCodeImage && (
+                <div className="bg-white rounded-xl p-4 w-fit mx-auto mb-4">
+                  <img
+                    src={`data:image/png;base64,${paymentData.qrCodeImage}`}
+                    alt="QR Code"
+                    className="w-40 h-40"
+                  />
                 </div>
-                <h1 className="text-xl font-bold mb-1">Acesso VIP</h1>
-                <p className="text-muted-foreground text-sm">Escaneie o QR Code ou copie a chave PIX</p>
-              </div>
+              )}
 
-              {/* Price Card */}
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-6 mb-6 text-center border border-primary/20">
-                <span className="text-sm text-muted-foreground">Valor único</span>
-                <div className="text-4xl font-bold text-primary mt-1">R$ 250,00</div>
-                <span className="text-xs text-muted-foreground">30 dias de acesso</span>
-              </div>
-
-              {/* QR Code */}
-              <div className="bg-card rounded-2xl p-6 mb-4 border">
-                <div className="flex items-center gap-2 mb-4">
-                  <QrCode className="w-5 h-5 text-primary" />
-                  <span className="font-medium">QR Code PIX</span>
-                </div>
-                
-                {paymentData.qrCodeImage ? (
-                  <div className="bg-white rounded-xl p-4 w-fit mx-auto mb-4 shadow-sm">
-                    <img
-                      src={`data:image/png;base64,${paymentData.qrCodeImage}`}
-                      alt="QR Code PIX"
-                      className="w-48 h-48"
-                    />
-                  </div>
-                ) : paymentData.qrCode ? (
-                  <div className="bg-white rounded-xl p-4 w-fit mx-auto mb-4 shadow-sm">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(paymentData.qrCode)}`}
-                      alt="QR Code PIX"
-                      className="w-48 h-48"
-                    />
-                  </div>
-                ) : null}
-
-                <p className="text-xs text-center text-muted-foreground">
-                  Abra o app do seu banco e escaneie o código
+              <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                <p className="text-[10px] font-mono text-muted-foreground break-all">
+                  {paymentData.qrCode?.substring(0, 60)}...
                 </p>
               </div>
 
-              {/* Copy Key Section */}
-              <div className="bg-card rounded-2xl p-4 mb-4 border">
-                <div className="flex items-center gap-2 mb-3">
-                  <Copy className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-sm">Chave Copia e Cola</span>
-                </div>
-                
-                <div className="bg-muted/50 rounded-lg p-3 mb-3">
-                  <p className="text-xs font-mono text-muted-foreground break-all leading-relaxed">
-                    {paymentData.qrCode}
-                  </p>
-                </div>
-
-                <Button 
-                  onClick={copyToClipboard} 
-                  variant={copied ? "default" : "outline"}
-                  className="w-full"
+              <div className="flex gap-2">
+                <Button onClick={copyToClipboard} variant="outline" className="flex-1">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar
+                </Button>
+                <Button
+                  onClick={checkPaymentStatus}
+                  disabled={isCheckingStatus}
+                  className="flex-1"
                 >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Copiado!
-                    </>
+                  {isCheckingStatus ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copiar Chave PIX
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Verificar
                     </>
                   )}
                 </Button>
               </div>
 
-              {/* Verify Payment */}
-              <Button
-                onClick={checkPaymentStatus}
-                disabled={isCheckingStatus}
-                className="w-full btn-vip h-12"
-              >
-                {isCheckingStatus ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Verificando...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Já Paguei - Verificar
-                  </>
-                )}
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground mt-4 flex items-center justify-center gap-1.5">
-                <Shield className="w-3 h-3" />
-                O VIP é ativado automaticamente após o pagamento
+              <p className="text-[10px] text-muted-foreground mt-4">
+                O acesso é liberado automaticamente após o pagamento
               </p>
             </motion.div>
           )}
 
-          {/* Not logged in */}
-          {!user && !isLoading && (
+          {/* Form */}
+          {!showQRCode && !showSuccess && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
             >
-              <Crown className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h1 className="text-xl font-bold mb-2">Acesso VIP</h1>
-              <p className="text-muted-foreground mb-6">
-                Faça login para adquirir o acesso VIP
-              </p>
-              
-              <div className="bg-card rounded-2xl p-6 mb-6 border">
-                <div className="text-3xl font-bold text-primary mb-2">R$ 250,00</div>
-                <span className="text-sm text-muted-foreground">30 dias de acesso</span>
-                
-                <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                  {benefits.map((benefit, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <Check className="w-3 h-3 text-primary flex-shrink-0" />
-                      <span>{benefit}</span>
-                    </div>
-                  ))}
+              {/* Header + Price */}
+              <div className="text-center mb-4">
+                <Crown className="w-8 h-8 text-primary mx-auto mb-2" />
+                <h1 className="text-lg font-bold">Acesso VIP</h1>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <span className="text-xs text-muted-foreground line-through">R$ 497</span>
+                  <span className="text-2xl font-bold text-primary">R$ 97</span>
                 </div>
               </div>
 
-              <Link to="/login">
-                <Button className="btn-vip w-full">
-                  Fazer Login
-                </Button>
-              </Link>
+              {/* Benefits - 2 cols */}
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-4 text-xs">
+                {benefits.map((benefit, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Check className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span>{benefit}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Form */}
+              <div className="space-y-3 mb-4">
+                <div>
+                  <Label htmlFor="name" className="text-xs">Nome</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Seu nome"
+                    className="mt-1 h-9 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="text-xs">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className="mt-1 h-9 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cpf" className="text-xs">CPF</Label>
+                  <Input
+                    id="cpf"
+                    value={cpf}
+                    onChange={handleCPFChange}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className="mt-1 h-9 text-sm"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={generatePixPayment}
+                disabled={isLoading}
+                className="btn-vip w-full h-10"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Gerar PIX"
+                )}
+              </Button>
+
+              <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
+                <Shield className="w-3 h-3" />
+                <span>Pagamento seguro</span>
+              </div>
             </motion.div>
           )}
         </div>
