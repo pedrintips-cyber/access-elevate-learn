@@ -16,7 +16,7 @@ import ToolsPage from "./pages/ToolsPage";
 import ToolsCategoryPage from "./pages/ToolsCategoryPage";
 import ToolDetailPage from "./pages/ToolDetailPage";
 import ProfilePage from "./pages/ProfilePage";
-import CheckoutPage from "./pages/CheckoutPage";
+import TokenVIPPage from "./pages/TokenVIPPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFound from "./pages/NotFound";
@@ -27,6 +27,7 @@ import AdminTools from "./pages/admin/AdminTools";
 import AdminPosts from "./pages/admin/AdminPosts";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminTokens from "./pages/admin/AdminTokens";
 import AdminSettings from "./pages/admin/AdminSettings";
 import FeedPage from "./pages/FeedPage";
 import FeedbackPage from "./pages/FeedbackPage";
@@ -59,7 +60,7 @@ const App = () => (
             <Route path="/feed" element={<FeedPage />} />
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/token-vip" element={<TokenVIPPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             {/* Settings/Profile Routes */}
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/admin/posts" element={<AdminPosts />} />
             <Route path="/admin/feedback" element={<AdminFeedback />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/tokens" element={<AdminTokens />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
