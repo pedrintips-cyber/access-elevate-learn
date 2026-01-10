@@ -108,11 +108,11 @@ serve(async (req) => {
       );
     }
 
-    // CPF is optional - if provided, validate it
+    // CPF is required by SyncPay
     const cpfClean = payer.document?.replace(/\D/g, '') || '';
-    if (cpfClean && cpfClean.length !== 11) {
+    if (!cpfClean || cpfClean.length !== 11) {
       return new Response(
-        JSON.stringify({ error: 'CPF deve ter 11 dígitos' }),
+        JSON.stringify({ error: 'CPF é obrigatório e deve ter 11 dígitos' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -132,15 +132,12 @@ serve(async (req) => {
       webhookUrl 
     });
 
-    // Build client object - CPF is optional
+    // Build client object - CPF is required
     const clientData: Record<string, string> = {
       name: payer.name.trim(),
+      cpf: cpfClean,
       email: payer.email.trim().toLowerCase(),
     };
-    
-    if (cpfClean) {
-      clientData.cpf = cpfClean;
-    }
     
     if (payer.phone) {
       clientData.phone = payer.phone.replace(/\D/g, '');
