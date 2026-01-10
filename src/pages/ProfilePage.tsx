@@ -1,4 +1,4 @@
-import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones, Copy, Clock, CheckCircle } from "lucide-react";
+import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones, Copy, Clock, CheckCircle, Key } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 
 const menuItems = [
+  { icon: Key, label: "Token VIP", path: "/token-vip" },
   { icon: Bell, label: "Notificações", path: "/settings/notifications" },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/support" },
   { icon: Shield, label: "Privacidade", path: "/privacy" },
@@ -236,16 +237,6 @@ const ProfilePage = () => {
                       <p className="text-xs text-muted-foreground">dias</p>
                     </div>
                   </div>
-                  {vipDaysRemaining <= 10 && (
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                      <Link 
-                        to="/checkout" 
-                        className="w-full flex items-center justify-center text-sm font-semibold py-3 px-4 rounded-xl bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground hover:opacity-90 transition-opacity"
-                      >
-                        🔥 Renovar VIP Agora
-                      </Link>
-                    </div>
-                  )}
                 </motion.div>
               )}
 

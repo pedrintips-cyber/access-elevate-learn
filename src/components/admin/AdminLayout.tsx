@@ -15,7 +15,8 @@ import {
   MessageCircle,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Key
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const menuItems = [
   { label: "Posts", path: "/admin/posts", icon: MessageSquare },
   { label: "Feedback", path: "/admin/feedback", icon: MessageCircle },
   { label: "Usuários", path: "/admin/users", icon: Users },
+  { label: "Tokens VIP", path: "/admin/tokens", icon: Key },
   { label: "Configurações", path: "/admin/settings", icon: Settings },
 ];
 
