@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Crown, Shield, CheckCircle, ArrowLeft, Copy, Loader2, RefreshCw, Check, QrCode } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 const benefits = [
   "Todos os módulos VIP",
@@ -18,21 +17,12 @@ const benefits = [
 
 const VIP_PRICE_CENTS = 25000;
 
-const formatCPF = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-};
-
 const CheckoutPage = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [cpf, setCpf] = useState("");
   const [paymentData, setPaymentData] = useState<{
     qrCode: string;
     qrCodeImage: string;
@@ -40,16 +30,17 @@ const CheckoutPage = () => {
     status: string;
   } | null>(null);
 
+  // Auto-generate payment when user is logged in
+  useEffect(() => {
+    if (user && !paymentData && !isLoading) {
+      generatePixPayment();
+    }
+  }, [user]);
+
   const generatePixPayment = async () => {
     if (!user) {
       toast.error("Faça login para continuar");
       navigate("/login");
-      return;
-    }
-
-    const cpfClean = cpf.replace(/\D/g, '');
-    if (cpfClean.length !== 11) {
-      toast.error("Digite um CPF válido com 11 dígitos");
       return;
     }
 
@@ -65,7 +56,6 @@ const CheckoutPage = () => {
           payer: {
             name: profile?.full_name || user.email?.split('@')[0] || 'Cliente',
             email: user.email || '',
-            document: cpfClean,
           },
           userId: user.id,
         },
@@ -78,6 +68,7 @@ const CheckoutPage = () => {
       }
 
       if (data.error) {
+        console.error('API Error:', data.error, data.details);
         toast.error(data.error);
         return;
       }
@@ -290,66 +281,6 @@ const CheckoutPage = () => {
               <p className="text-xs text-center text-muted-foreground mt-4 flex items-center justify-center gap-1.5">
                 <Shield className="w-3 h-3" />
                 O VIP é ativado automaticamente após o pagamento
-              </p>
-            </motion.div>
-          )}
-
-          {/* CPF Form - before payment */}
-          {user && !paymentData && !isLoading && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              {/* Header */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
-                  <Crown className="w-7 h-7 text-primary" />
-                </div>
-                <h1 className="text-xl font-bold mb-1">Acesso VIP</h1>
-                <p className="text-muted-foreground text-sm">30 dias de conteúdo exclusivo</p>
-              </div>
-
-              {/* Price Card */}
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-6 mb-6 text-center border border-primary/20">
-                <span className="text-sm text-muted-foreground">Valor único</span>
-                <div className="text-4xl font-bold text-primary mt-1">R$ 250,00</div>
-                <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                  {benefits.map((benefit, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <Check className="w-3 h-3 text-primary flex-shrink-0" />
-                      <span>{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* CPF Input */}
-              <div className="bg-card rounded-2xl p-4 mb-4 border">
-                <label className="block text-sm font-medium mb-2">
-                  Digite seu CPF para gerar o PIX
-                </label>
-                <Input
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={(e) => setCpf(formatCPF(e.target.value))}
-                  className="text-center text-lg tracking-wider"
-                  maxLength={14}
-                />
-              </div>
-
-              <Button
-                onClick={generatePixPayment}
-                disabled={cpf.replace(/\D/g, '').length !== 11}
-                className="w-full btn-vip h-12"
-              >
-                <QrCode className="w-4 h-4 mr-2" />
-                Gerar PIX
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground mt-4 flex items-center justify-center gap-1.5">
-                <Shield className="w-3 h-3" />
-                Pagamento seguro via PIX
               </p>
             </motion.div>
           )}
