@@ -538,6 +538,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      use_vip_token: {
+        Args: { token_input: string; user_id_input: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
+      validate_vip_token: {
+        Args: { token_input: string }
+        Returns: {
+          is_valid: boolean
+          token_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
