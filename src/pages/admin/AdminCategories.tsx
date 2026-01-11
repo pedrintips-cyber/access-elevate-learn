@@ -19,12 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Plus, Pencil, Trash2, Loader2, ChevronRight, ChevronDown, FolderOpen, FolderClosed } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronRight, ChevronDown, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -41,6 +36,7 @@ export default function AdminCategories() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -49,6 +45,18 @@ export default function AdminCategories() {
     order_index: 0,
     parent_id: "",
   });
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["admin-categories"],
@@ -305,14 +313,22 @@ export default function AdminCategories() {
             const subcategories = getSubcategories(category.id);
             
             return (
-              <Collapsible key={category.id} className="glass-card overflow-hidden">
+              <div key={category.id} className="glass-card overflow-hidden">
                 {/* Categoria Principal */}
                 <div className="flex items-center justify-between p-4 bg-secondary/30">
                   <div className="flex items-center gap-3 flex-1">
                     {subcategories.length > 0 ? (
-                      <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                      <button 
+                        type="button"
+                        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                        onClick={() => toggleCategory(category.id)}
+                      >
                         <div className="relative">
-                          <FolderClosed className="w-5 h-5 text-primary group-data-[state=open]:hidden" />
+                          {expandedCategories.has(category.id) ? (
+                            <ChevronDown className="w-5 h-5 text-primary" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-primary" />
+                          )}
                         </div>
                         <div className="text-left">
                           <p className="font-medium">{category.name}</p>
@@ -324,13 +340,12 @@ export default function AdminCategories() {
                             }`}>
                               {typeLabels[category.type]}
                             </span>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <ChevronRight className="w-3 h-3" />
-                              {subcategories.length} subcategoria{subcategories.length > 1 ? 's' : ''} (clique para ver)
+                            <span className="text-xs text-muted-foreground">
+                              {subcategories.length} subcategoria{subcategories.length > 1 ? 's' : ''}
                             </span>
                           </div>
                         </div>
-                      </CollapsibleTrigger>
+                      </button>
                     ) : (
                       <div className="flex items-center gap-3">
                         <FolderOpen className="w-5 h-5 text-primary" />
@@ -384,51 +399,49 @@ export default function AdminCategories() {
                   </div>
                 </div>
 
-                {/* Subcategorias - Colapsável */}
-                {subcategories.length > 0 && (
-                  <CollapsibleContent>
-                    <div className="border-t border-border">
-                      {subcategories.map((sub) => (
-                        <div 
-                          key={sub.id} 
-                          className="flex items-center justify-between p-4 pl-12 border-b border-border/50 last:border-b-0 hover:bg-secondary/20"
-                        >
-                          <div className="flex items-center gap-2">
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium text-sm">{sub.name}</p>
-                              {sub.description && (
-                                <p className="text-xs text-muted-foreground">{sub.description}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(sub)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                if (confirm("Tem certeza que deseja excluir esta subcategoria?")) {
-                                  deleteMutation.mutate(sub.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                {/* Subcategorias - Expandível */}
+                {subcategories.length > 0 && expandedCategories.has(category.id) && (
+                  <div className="border-t border-border">
+                    {subcategories.map((sub) => (
+                      <div 
+                        key={sub.id} 
+                        className="flex items-center justify-between p-4 pl-12 border-b border-border/50 last:border-b-0 hover:bg-secondary/20"
+                      >
+                        <div className="flex items-center gap-2">
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium text-sm">{sub.name}</p>
+                            {sub.description && (
+                              <p className="text-xs text-muted-foreground">{sub.description}</p>
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(sub)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("Tem certeza que deseja excluir esta subcategoria?")) {
+                                deleteMutation.mutate(sub.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </Collapsible>
+              </div>
             );
           })}
 
