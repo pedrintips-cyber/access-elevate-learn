@@ -1,4 +1,4 @@
-import { Crown, Star, CheckCircle, ArrowRight, Sparkles, Shield, Zap, ChevronRight, Key } from "lucide-react";
+import { Crown, Star, CheckCircle, Sparkles, Shield, Zap, Key } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -48,10 +48,8 @@ const VIPPage = () => {
     fetchCategories();
   }, []);
 
-  // Separar categorias principais e subcategorias
+  // Apenas categorias principais (sem parent_id)
   const mainCategories = categories.filter(c => !c.parent_id);
-  const getSubcategories = (parentId: string) => 
-    categories.filter(c => c.parent_id === parentId);
 
   return (
     <Layout>
@@ -103,57 +101,18 @@ const VIPPage = () => {
             </div>
           ) : (
             <>
-              {/* Categories */}
+              {/* Categories - apenas categorias principais */}
               <div className="space-y-4 mb-10">
-                {mainCategories.map((category, index) => {
-                  const subcategories = getSubcategories(category.id);
-                  
-                  return (
-                    <motion.div
-                      key={category.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.08 }}
-                    >
-                      <CategoryCard {...category} isLocked={!isVIP} />
-                      
-                      {/* Subcategorias */}
-                      {subcategories.length > 0 && (
-                        <div className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
-                          {subcategories.map((sub, subIndex) => (
-                            <motion.div
-                              key={sub.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.08 + subIndex * 0.05 }}
-                            >
-                              <Link
-                                to={isVIP ? `/vip/category/${sub.id}` : "#"}
-                                className={`flex items-center gap-3 p-3 rounded-lg transition-colors group ${
-                                  isVIP 
-                                    ? "bg-primary/5 hover:bg-primary/10" 
-                                    : "bg-secondary/30 opacity-60 cursor-not-allowed"
-                                }`}
-                              >
-                                <ChevronRight className={`w-4 h-4 transition-colors ${
-                                  isVIP ? "text-primary" : "text-muted-foreground"
-                                }`} />
-                                <div>
-                                  <p className={`font-medium text-sm transition-colors ${
-                                    isVIP ? "group-hover:text-primary" : ""
-                                  }`}>{sub.name}</p>
-                                  {sub.description && (
-                                    <p className="text-xs text-muted-foreground">{sub.description}</p>
-                                  )}
-                                </div>
-                              </Link>
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
+                {mainCategories.map((category, index) => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                  >
+                    <CategoryCard {...category} isLocked={!isVIP} />
+                  </motion.div>
+                ))}
               </div>
 
               {/* CTA simples para não-VIP */}
