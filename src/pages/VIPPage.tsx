@@ -156,64 +156,21 @@ const VIPPage = () => {
                 })}
               </div>
 
-              {/* VIP Token Card - Only show if not VIP */}
+              {/* CTA simples para não-VIP */}
               {!isVIP && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="glass-card p-6 md:p-8 vip-glow relative overflow-hidden"
+                  className="text-center"
                 >
-                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-primary/30 to-transparent rounded-full blur-3xl" />
-                  <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-warning/20 to-transparent rounded-full blur-3xl" />
-                  
-                  <div className="relative">
-                    <div className="text-center mb-8">
-                      <motion.div
-                        animate={{ rotate: [0, 5, -5, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                      >
-                        <Key className="w-16 h-16 text-primary mx-auto mb-4" />
-                      </motion.div>
-                      <h2 className="font-display text-2xl md:text-3xl font-bold mb-2">
-                        Ative seu Token VIP
-                      </h2>
-                      <p className="text-muted-foreground">
-                        Use seu token para desbloquear todo o conteúdo premium
-                      </p>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-3 mb-8">
-                      {vipBenefits.map((benefit, index) => (
-                        <motion.div 
-                          key={index} 
-                          className="flex items-center gap-3 p-3 bg-secondary/50 rounded-xl"
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.6 + index * 0.05 }}
-                        >
-                          <benefit.icon className="w-5 h-5 text-success flex-shrink-0" />
-                          <span className="text-sm font-medium">{benefit.text}</span>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Link
-                        to="/token-vip"
-                        className="btn-vip w-full flex items-center justify-center gap-2 text-lg py-4"
-                      >
-                        <Key className="w-5 h-5" />
-                        Ativar meu Token VIP
-                        <ArrowRight className="w-5 h-5" />
-                      </Link>
-                    </motion.div>
-
-                    <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-2">
-                      <Shield className="w-4 h-4" />
-                      Cada token dá acesso por 30 dias
-                    </p>
-                  </div>
+                  <Link
+                    to="/token-vip"
+                    className="btn-vip inline-flex items-center gap-2"
+                  >
+                    <Key className="w-5 h-5" />
+                    Ativar meu Token VIP
+                  </Link>
                 </motion.div>
               )}
             </>
