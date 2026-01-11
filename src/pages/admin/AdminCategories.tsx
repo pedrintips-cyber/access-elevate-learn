@@ -40,7 +40,7 @@ export default function AdminCategories() {
     name: "",
     description: "",
     icon: "Flame",
-    type: "free",
+    type: "vip",
     order_index: 0,
     parent_id: "",
   });
@@ -115,7 +115,7 @@ export default function AdminCategories() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", icon: "Flame", type: "free", order_index: 0, parent_id: "" });
+    setFormData({ name: "", description: "", icon: "Flame", type: "vip", order_index: 0, parent_id: "" });
     setEditingCategory(null);
   };
 
@@ -129,6 +129,16 @@ export default function AdminCategories() {
       order_index: category.order_index || 0,
       parent_id: category.parent_id || "",
     });
+    setIsOpen(true);
+  };
+
+  const handleCreateSubcategory = (parentCategory: Category) => {
+    resetForm();
+    setFormData(prev => ({
+      ...prev,
+      type: parentCategory.type,
+      parent_id: parentCategory.id,
+    }));
     setIsOpen(true);
   };
 
@@ -148,7 +158,6 @@ export default function AdminCategories() {
   ];
 
   const typeLabels: Record<string, string> = {
-    free: "Gratuito",
     vip: "VIP",
     tools: "Ferramentas",
   };
@@ -211,7 +220,6 @@ export default function AdminCategories() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">Gratuito</SelectItem>
                       <SelectItem value="vip">VIP</SelectItem>
                       <SelectItem value="tools">Ferramentas</SelectItem>
                     </SelectContent>
@@ -318,6 +326,15 @@ export default function AdminCategories() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-primary border-primary/30 hover:bg-primary/10"
+                      onClick={() => handleCreateSubcategory(category)}
+                      title="Adicionar subcategoria"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
