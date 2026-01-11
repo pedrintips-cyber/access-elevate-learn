@@ -1,4 +1,4 @@
-import { Crown, Star, CheckCircle, ArrowRight, Sparkles, Shield, Zap } from "lucide-react";
+import { Crown, Star, CheckCircle, ArrowRight, Sparkles, Shield, Zap, ChevronRight, Key } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -14,10 +14,11 @@ interface Category {
   icon: string | null;
   type: string;
   order_index: number;
+  parent_id: string | null;
 }
 
 const vipBenefits = [
-  { icon: Zap, text: "Acesso vitalício a todos os módulos" },
+  { icon: Zap, text: "Acesso a todos os módulos" },
   { icon: Star, text: "50+ aulas exclusivas" },
   { icon: Shield, text: "Scripts e templates prontos" },
   { icon: CheckCircle, text: "Comunidade privada" },
@@ -46,6 +47,11 @@ const VIPPage = () => {
 
     fetchCategories();
   }, []);
+
+  // Separar categorias principais e subcategorias
+  const mainCategories = categories.filter(c => !c.parent_id);
+  const getSubcategories = (parentId: string) => 
+    categories.filter(c => c.parent_id === parentId);
 
   return (
     <Layout>
@@ -99,19 +105,58 @@ const VIPPage = () => {
             <>
               {/* Categories */}
               <div className="space-y-4 mb-10">
-                {categories.map((category, index) => (
-                  <motion.div
-                    key={category.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.08 }}
-                  >
-                    <CategoryCard {...category} isLocked={!isVIP} />
-                  </motion.div>
-                ))}
+                {mainCategories.map((category, index) => {
+                  const subcategories = getSubcategories(category.id);
+                  
+                  return (
+                    <motion.div
+                      key={category.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08 }}
+                    >
+                      <CategoryCard {...category} isLocked={!isVIP} />
+                      
+                      {/* Subcategorias */}
+                      {subcategories.length > 0 && (
+                        <div className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
+                          {subcategories.map((sub, subIndex) => (
+                            <motion.div
+                              key={sub.id}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.08 + subIndex * 0.05 }}
+                            >
+                              <Link
+                                to={isVIP ? `/vip/category/${sub.id}` : "#"}
+                                className={`flex items-center gap-3 p-3 rounded-lg transition-colors group ${
+                                  isVIP 
+                                    ? "bg-primary/5 hover:bg-primary/10" 
+                                    : "bg-secondary/30 opacity-60 cursor-not-allowed"
+                                }`}
+                              >
+                                <ChevronRight className={`w-4 h-4 transition-colors ${
+                                  isVIP ? "text-primary" : "text-muted-foreground"
+                                }`} />
+                                <div>
+                                  <p className={`font-medium text-sm transition-colors ${
+                                    isVIP ? "group-hover:text-primary" : ""
+                                  }`}>{sub.name}</p>
+                                  {sub.description && (
+                                    <p className="text-xs text-muted-foreground">{sub.description}</p>
+                                  )}
+                                </div>
+                              </Link>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
               </div>
 
-              {/* VIP Purchase Card - Only show if not VIP */}
+              {/* VIP Token Card - Only show if not VIP */}
               {!isVIP && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -128,13 +173,13 @@ const VIPPage = () => {
                         animate={{ rotate: [0, 5, -5, 0] }}
                         transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                       >
-                        <Crown className="w-16 h-16 text-primary mx-auto mb-4" />
+                        <Key className="w-16 h-16 text-primary mx-auto mb-4" />
                       </motion.div>
                       <h2 className="font-display text-2xl md:text-3xl font-bold mb-2">
-                        Torne-se VIP Agora
+                        Ative seu Token VIP
                       </h2>
                       <p className="text-muted-foreground">
-                        Acesso completo a todo o conteúdo premium
+                        Use seu token para desbloquear todo o conteúdo premium
                       </p>
                     </div>
 
@@ -153,36 +198,20 @@ const VIPPage = () => {
                       ))}
                     </div>
 
-                    <div className="text-center mb-8 p-6 bg-secondary/30 rounded-2xl">
-                      <div className="text-muted-foreground text-sm line-through mb-1">
-                        De R$ 497,00
-                      </div>
-                      <div className="flex items-baseline justify-center gap-1 mb-2">
-                        <span className="text-muted-foreground">Por apenas</span>
-                        <span className="font-display text-5xl font-bold gradient-text-vip">
-                          R$ 250
-                        </span>
-                        <span className="text-muted-foreground">,00</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Pagamento único • Acesso vitalício
-                      </p>
-                    </div>
-
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Link
-                        to="/checkout"
+                        to="/token-vip"
                         className="btn-vip w-full flex items-center justify-center gap-2 text-lg py-4"
                       >
-                        <Crown className="w-5 h-5" />
-                        Quero ser VIP agora
+                        <Key className="w-5 h-5" />
+                        Ativar meu Token VIP
                         <ArrowRight className="w-5 h-5" />
                       </Link>
                     </motion.div>
 
                     <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-2">
                       <Shield className="w-4 h-4" />
-                      Pagamento 100% seguro • Satisfação garantida
+                      Cada token dá acesso por 30 dias
                     </p>
                   </div>
                 </motion.div>

@@ -305,7 +305,7 @@ const FeedbackPage = () => {
               <p className="text-muted-foreground text-sm mb-4">
                 Torne-se VIP para compartilhar sua opinião
               </p>
-              <Link to="/checkout">
+              <Link to="/vip">
                 <Button className="btn-vip">Quero ser VIP</Button>
               </Link>
             </motion.div>
