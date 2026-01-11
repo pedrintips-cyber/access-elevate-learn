@@ -333,7 +333,6 @@ export default function AdminLessons() {
   };
 
   const typeLabels: Record<string, string> = {
-    free: "Gratuito",
     vip: "VIP",
     tools: "Ferramentas",
   };

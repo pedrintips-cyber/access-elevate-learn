@@ -5,9 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
-import FreePage from "./pages/FreePage";
-import FreeLessonPage from "./pages/FreeLessonPage";
-import FreeCategoryPage from "./pages/FreeCategoryPage";
 import VIPPage from "./pages/VIPPage";
 import VIPModulePage from "./pages/VIPModulePage";
 import VIPLessonPage from "./pages/VIPLessonPage";
@@ -47,9 +44,6 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/free" element={<FreePage />} />
-            <Route path="/free/category/:id" element={<FreeCategoryPage />} />
-            <Route path="/free/:id" element={<FreeLessonPage />} />
             <Route path="/vip" element={<VIPPage />} />
             <Route path="/vip/category/:id" element={<VIPCategoryPage />} />
             <Route path="/vip/module/:id" element={<VIPModulePage />} />
