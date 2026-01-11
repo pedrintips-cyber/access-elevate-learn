@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronRight, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -29,6 +29,7 @@ interface Category {
   icon: string | null;
   type: string;
   order_index: number | null;
+  parent_id: string | null;
 }
 
 export default function AdminCategories() {
@@ -41,6 +42,7 @@ export default function AdminCategories() {
     icon: "Flame",
     type: "free",
     order_index: 0,
+    parent_id: "",
   });
 
   const { data: categories, isLoading } = useQuery({
@@ -58,7 +60,15 @@ export default function AdminCategories() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("categories").insert(data);
+      const insertData = {
+        name: data.name,
+        description: data.description || null,
+        icon: data.icon,
+        type: data.type,
+        order_index: data.order_index,
+        parent_id: data.parent_id || null,
+      };
+      const { error } = await supabase.from("categories").insert(insertData);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -72,7 +82,15 @@ export default function AdminCategories() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase.from("categories").update(data).eq("id", id);
+      const updateData = {
+        name: data.name,
+        description: data.description || null,
+        icon: data.icon,
+        type: data.type,
+        order_index: data.order_index,
+        parent_id: data.parent_id || null,
+      };
+      const { error } = await supabase.from("categories").update(updateData).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -93,11 +111,11 @@ export default function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       toast.success("Categoria excluída!");
     },
-    onError: () => toast.error("Erro ao excluir categoria"),
+    onError: () => toast.error("Erro ao excluir categoria. Verifique se não há subcategorias ou aulas vinculadas."),
   });
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", icon: "Flame", type: "free", order_index: 0 });
+    setFormData({ name: "", description: "", icon: "Flame", type: "free", order_index: 0, parent_id: "" });
     setEditingCategory(null);
   };
 
@@ -109,6 +127,7 @@ export default function AdminCategories() {
       icon: category.icon || "Flame",
       type: category.type,
       order_index: category.order_index || 0,
+      parent_id: category.parent_id || "",
     });
     setIsOpen(true);
   };
@@ -124,7 +143,8 @@ export default function AdminCategories() {
 
   const iconOptions = [
     "Flame", "Star", "Zap", "Target", "Trophy", "Rocket", 
-    "Lightbulb", "TrendingUp", "DollarSign", "Crown", "Heart", "Gift"
+    "Lightbulb", "TrendingUp", "DollarSign", "Crown", "Heart", "Gift",
+    "Brain", "MessageCircle", "Bot", "FileText", "Palette", "Layers"
   ];
 
   const typeLabels: Record<string, string> = {
@@ -133,11 +153,21 @@ export default function AdminCategories() {
     tools: "Ferramentas",
   };
 
+  // Separar categorias principais e subcategorias
+  const mainCategories = categories?.filter(c => !c.parent_id) || [];
+  const getSubcategories = (parentId: string) => 
+    categories?.filter(c => c.parent_id === parentId) || [];
+
+  // Categorias disponíveis como pai (excluir a própria categoria se estiver editando)
+  const availableParentCategories = categories?.filter(c => 
+    !c.parent_id && c.id !== editingCategory?.id
+  ) || [];
+
   return (
     <AdminLayout title="Categorias">
       <div className="flex justify-between items-center mb-6">
         <p className="text-muted-foreground">
-          Gerencie as categorias de conteúdo
+          Gerencie as categorias e subcategorias
         </p>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -207,6 +237,28 @@ export default function AdminCategories() {
                 </div>
               </div>
               <div>
+                <label className="text-sm font-medium mb-1 block">Categoria Pai (opcional)</label>
+                <Select
+                  value={formData.parent_id}
+                  onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhuma (categoria principal)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhuma (categoria principal)</SelectItem>
+                    {availableParentCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name} ({typeLabels[cat.type]})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Selecione uma categoria pai para criar uma subcategoria
+                </p>
+              </div>
+              <div>
                 <label className="text-sm font-medium mb-1 block">Ordem</label>
                 <Input
                   type="number"
@@ -235,72 +287,110 @@ export default function AdminCategories() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-secondary/50">
-              <tr>
-                <th className="text-left p-4 font-medium">Nome</th>
-                <th className="text-left p-4 font-medium hidden md:table-cell">Tipo</th>
-                <th className="text-left p-4 font-medium hidden md:table-cell">Ícone</th>
-                <th className="text-left p-4 font-medium hidden md:table-cell">Ordem</th>
-                <th className="text-right p-4 font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories?.map((category) => (
-                <tr key={category.id} className="border-t border-border">
-                  <td className="p-4">
+        <div className="space-y-4">
+          {mainCategories.map((category) => {
+            const subcategories = getSubcategories(category.id);
+            
+            return (
+              <div key={category.id} className="glass-card overflow-hidden">
+                {/* Categoria Principal */}
+                <div className="flex items-center justify-between p-4 bg-secondary/30">
+                  <div className="flex items-center gap-3">
+                    <FolderOpen className="w-5 h-5 text-primary" />
                     <div>
                       <p className="font-medium">{category.name}</p>
-                      <p className="text-sm text-muted-foreground md:hidden">
-                        {typeLabels[category.type]}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          category.type === "vip" 
+                            ? "bg-primary/20 text-primary" 
+                            : category.type === "tools"
+                            ? "bg-warning/20 text-warning"
+                            : "bg-accent/20 text-accent"
+                        }`}>
+                          {typeLabels[category.type]}
+                        </span>
+                        {subcategories.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {subcategories.length} subcategoria{subcategories.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </td>
-                  <td className="p-4 hidden md:table-cell">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      category.type === "vip" 
-                        ? "bg-primary/20 text-primary" 
-                        : category.type === "tools"
-                        ? "bg-warning/20 text-warning"
-                        : "bg-accent/20 text-accent"
-                    }`}>
-                      {typeLabels[category.type]}
-                    </span>
-                  </td>
-                  <td className="p-4 hidden md:table-cell text-muted-foreground">
-                    {category.icon}
-                  </td>
-                  <td className="p-4 hidden md:table-cell text-muted-foreground">
-                    {category.order_index}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(category)}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleEdit(category)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => {
+                        if (confirm("Tem certeza que deseja excluir esta categoria e todas as subcategorias?")) {
+                          deleteMutation.mutate(category.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Subcategorias */}
+                {subcategories.length > 0 && (
+                  <div className="border-t border-border">
+                    {subcategories.map((sub) => (
+                      <div 
+                        key={sub.id} 
+                        className="flex items-center justify-between p-4 pl-12 border-b border-border/50 last:border-b-0 hover:bg-secondary/20"
                       >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          if (confirm("Tem certeza que deseja excluir esta categoria?")) {
-                            deleteMutation.mutate(category.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        <div className="flex items-center gap-2">
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium text-sm">{sub.name}</p>
+                            {sub.description && (
+                              <p className="text-xs text-muted-foreground">{sub.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(sub)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("Tem certeza que deseja excluir esta subcategoria?")) {
+                                deleteMutation.mutate(sub.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {mainCategories.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              Nenhuma categoria cadastrada
+            </div>
+          )}
         </div>
       )}
     </AdminLayout>

@@ -22,6 +22,7 @@ export type Database = {
           id: string
           name: string
           order_index: number | null
+          parent_id: string | null
           type: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           name: string
           order_index?: number | null
+          parent_id?: string | null
           type: string
         }
         Update: {
@@ -40,9 +42,18 @@ export type Database = {
           id?: string
           name?: string
           order_index?: number | null
+          parent_id?: string | null
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feedbacks: {
         Row: {

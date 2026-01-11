@@ -1,4 +1,4 @@
-import { Wrench, Lock, Crown, Sparkles } from "lucide-react";
+import { Wrench, Lock, Crown, Sparkles, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -14,6 +14,7 @@ interface Category {
   icon: string | null;
   type: string;
   order_index: number;
+  parent_id: string | null;
 }
 
 const ToolsPage = () => {
@@ -37,6 +38,11 @@ const ToolsPage = () => {
 
     fetchCategories();
   }, []);
+
+  // Separar categorias principais e subcategorias
+  const mainCategories = categories.filter(c => !c.parent_id);
+  const getSubcategories = (parentId: string) => 
+    categories.filter(c => c.parent_id === parentId);
 
   return (
     <Layout>
@@ -112,7 +118,7 @@ const ToolsPage = () => {
                     ))}
                   </div>
                 ) : (
-                  categories.map((category, index) => (
+                  mainCategories.map((category, index) => (
                     <motion.div
                       key={category.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -142,16 +148,47 @@ const ToolsPage = () => {
                   ))}
                 </div>
               ) : (
-                categories.map((category, index) => (
-                  <motion.div
-                    key={category.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.08 }}
-                  >
-                    <CategoryCard {...category} />
-                  </motion.div>
-                ))
+                mainCategories.map((category, index) => {
+                  const subcategories = getSubcategories(category.id);
+                  
+                  return (
+                    <motion.div
+                      key={category.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08 }}
+                    >
+                      <CategoryCard {...category} />
+                      
+                      {/* Subcategorias */}
+                      {subcategories.length > 0 && (
+                        <div className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
+                          {subcategories.map((sub, subIndex) => (
+                            <motion.div
+                              key={sub.id}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.08 + subIndex * 0.05 }}
+                            >
+                              <Link
+                                to={`/tools/category/${sub.id}`}
+                                className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors group"
+                              >
+                                <ChevronRight className="w-4 h-4 text-primary" />
+                                <div>
+                                  <p className="font-medium text-sm group-hover:text-primary transition-colors">{sub.name}</p>
+                                  {sub.description && (
+                                    <p className="text-xs text-muted-foreground">{sub.description}</p>
+                                  )}
+                                </div>
+                              </Link>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })
               )}
             </div>
           )}

@@ -401,7 +401,7 @@ const FeedPage = () => {
               <p className="text-muted-foreground text-sm mb-4">
                 Torne-se VIP para postar, curtir e comentar
               </p>
-              <Link to="/checkout">
+              <Link to="/vip">
                 <Button className="btn-vip">Quero ser VIP</Button>
               </Link>
             </motion.div>
@@ -580,7 +580,7 @@ const FeedPage = () => {
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground text-center py-2">
-                              <Link to="/checkout" className="text-primary hover:underline">
+                              <Link to="/vip" className="text-primary hover:underline">
                                 Seja VIP
                               </Link>{" "}
                               para comentar
