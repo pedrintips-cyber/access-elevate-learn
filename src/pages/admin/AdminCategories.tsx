@@ -19,7 +19,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, ChevronRight, FolderOpen } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Plus, Pencil, Trash2, Loader2, ChevronRight, ChevronDown, FolderOpen, FolderClosed } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -300,30 +305,52 @@ export default function AdminCategories() {
             const subcategories = getSubcategories(category.id);
             
             return (
-              <div key={category.id} className="glass-card overflow-hidden">
+              <Collapsible key={category.id} className="glass-card overflow-hidden">
                 {/* Categoria Principal */}
                 <div className="flex items-center justify-between p-4 bg-secondary/30">
-                  <div className="flex items-center gap-3">
-                    <FolderOpen className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="font-medium">{category.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          category.type === "vip" 
-                            ? "bg-primary/20 text-primary" 
-                            : category.type === "tools"
-                            ? "bg-warning/20 text-warning"
-                            : "bg-accent/20 text-accent"
-                        }`}>
-                          {typeLabels[category.type]}
-                        </span>
-                        {subcategories.length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {subcategories.length} subcategoria{subcategories.length > 1 ? 's' : ''}
-                          </span>
-                        )}
+                  <div className="flex items-center gap-3 flex-1">
+                    {subcategories.length > 0 ? (
+                      <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <div className="relative">
+                          <FolderClosed className="w-5 h-5 text-primary group-data-[state=open]:hidden" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium">{category.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              category.type === "vip" 
+                                ? "bg-primary/20 text-primary" 
+                                : "bg-warning/20 text-warning"
+                            }`}>
+                              {typeLabels[category.type]}
+                            </span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <ChevronRight className="w-3 h-3" />
+                              {subcategories.length} subcategoria{subcategories.length > 1 ? 's' : ''} (clique para ver)
+                            </span>
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <FolderOpen className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="font-medium">{category.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              category.type === "vip" 
+                                ? "bg-primary/20 text-primary" 
+                                : "bg-warning/20 text-warning"
+                            }`}>
+                              {typeLabels[category.type]}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Nenhuma subcategoria
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -357,49 +384,51 @@ export default function AdminCategories() {
                   </div>
                 </div>
 
-                {/* Subcategorias */}
+                {/* Subcategorias - Colapsável */}
                 {subcategories.length > 0 && (
-                  <div className="border-t border-border">
-                    {subcategories.map((sub) => (
-                      <div 
-                        key={sub.id} 
-                        className="flex items-center justify-between p-4 pl-12 border-b border-border/50 last:border-b-0 hover:bg-secondary/20"
-                      >
-                        <div className="flex items-center gap-2">
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium text-sm">{sub.name}</p>
-                            {sub.description && (
-                              <p className="text-xs text-muted-foreground">{sub.description}</p>
-                            )}
+                  <CollapsibleContent>
+                    <div className="border-t border-border">
+                      {subcategories.map((sub) => (
+                        <div 
+                          key={sub.id} 
+                          className="flex items-center justify-between p-4 pl-12 border-b border-border/50 last:border-b-0 hover:bg-secondary/20"
+                        >
+                          <div className="flex items-center gap-2">
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            <div>
+                              <p className="font-medium text-sm">{sub.name}</p>
+                              {sub.description && (
+                                <p className="text-xs text-muted-foreground">{sub.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEdit(sub)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (confirm("Tem certeza que deseja excluir esta subcategoria?")) {
+                                  deleteMutation.mutate(sub.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEdit(sub)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              if (confirm("Tem certeza que deseja excluir esta subcategoria?")) {
-                                deleteMutation.mutate(sub.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
                 )}
-              </div>
+              </Collapsible>
             );
           })}
 
