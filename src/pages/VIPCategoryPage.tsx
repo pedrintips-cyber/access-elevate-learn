@@ -1,4 +1,4 @@
-import { ArrowLeft, Crown, Play, Clock, Lock } from "lucide-react";
+import { ArrowLeft, Crown, Play, Clock, ChevronRight, Folder } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -10,6 +10,8 @@ interface Category {
   id: string;
   name: string;
   description: string | null;
+  parent_id: string | null;
+  icon: string | null;
 }
 
 interface Lesson {
@@ -25,6 +27,7 @@ const VIPCategoryPage = () => {
   const { isVIP } = useAuth();
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,12 +40,14 @@ const VIPCategoryPage = () => {
     const fetchData = async () => {
       if (!id) return;
 
-      const [categoryRes, lessonsRes] = await Promise.all([
+      const [categoryRes, subcategoriesRes, lessonsRes] = await Promise.all([
         supabase.from('categories').select('*').eq('id', id).maybeSingle(),
-        supabase.from('lessons').select('*').eq('category_id', id).order('order_index'),
+        supabase.from('categories').select('*').eq('parent_id', id).order('order_index'),
+        supabase.from('lessons').select('*').eq('category_id', id).eq('is_published', true).order('order_index'),
       ]);
 
       if (categoryRes.data) setCategory(categoryRes.data);
+      if (subcategoriesRes.data) setSubcategories(subcategoriesRes.data);
       if (lessonsRes.data) setLessons(lessonsRes.data);
       setLoading(false);
     };
@@ -114,65 +119,112 @@ const VIPCategoryPage = () => {
             </div>
           </motion.div>
 
-          {/* Lessons List */}
-          {lessons.length === 0 ? (
-            <div className="glass-card p-8 text-center">
-              <p className="text-muted-foreground">Nenhuma aula disponível nesta categoria ainda.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {lessons.map((lesson, index) => (
-                <motion.div
-                  key={lesson.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08 }}
-                >
-                  <Link
-                    to={`/vip/lesson/${lesson.id}`}
-                    className="glass-card block overflow-hidden group hover:border-primary/30 transition-all duration-300"
+          {/* Subcategories */}
+          {subcategories.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Subcategorias</h2>
+              <div className="grid gap-3">
+                {subcategories.map((sub, index) => (
+                  <motion.div
+                    key={sub.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
                   >
-                    <div className="flex gap-4 p-4">
-                      <div className="relative w-28 h-20 md:w-36 md:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
-                        {lesson.thumbnail_url ? (
-                          <img
-                            src={lesson.thumbnail_url}
-                            alt={lesson.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-warning/20">
-                            <Play className="w-8 h-8 text-primary" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-10 h-10 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all">
-                            <Play className="w-4 h-4 text-foreground ml-0.5" />
+                    <Link
+                      to={`/vip/category/${sub.id}`}
+                      className="glass-card block p-4 group hover:border-primary/30 transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-warning/20 flex items-center justify-center flex-shrink-0">
+                          <Folder className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {sub.name}
+                          </h3>
+                          {sub.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {sub.description}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Lessons List */}
+          {lessons.length > 0 && (
+            <div>
+              {subcategories.length > 0 && (
+                <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Aulas</h2>
+              )}
+              <div className="space-y-4">
+                {lessons.map((lesson, index) => (
+                  <motion.div
+                    key={lesson.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08 }}
+                  >
+                    <Link
+                      to={`/vip/lesson/${lesson.id}`}
+                      className="glass-card block overflow-hidden group hover:border-primary/30 transition-all duration-300"
+                    >
+                      <div className="flex gap-4 p-4">
+                        <div className="relative w-28 h-20 md:w-36 md:h-24 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+                          {lesson.thumbnail_url ? (
+                            <img
+                              src={lesson.thumbnail_url}
+                              alt={lesson.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-warning/20">
+                              <Play className="w-8 h-8 text-primary" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all">
+                              <Play className="w-4 h-4 text-foreground ml-0.5" />
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="flex-1 min-w-0 py-1">
-                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 mb-1">
-                          {lesson.title}
-                        </h3>
-                        {lesson.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                            {lesson.description}
-                          </p>
-                        )}
-                        {lesson.duration && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>{lesson.duration}</span>
-                          </div>
-                        )}
+                        <div className="flex-1 min-w-0 py-1">
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 mb-1">
+                            {lesson.title}
+                          </h3>
+                          {lesson.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                              {lesson.description}
+                            </p>
+                          )}
+                          {lesson.duration && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{lesson.duration}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {subcategories.length === 0 && lessons.length === 0 && (
+            <div className="glass-card p-8 text-center">
+              <p className="text-muted-foreground">Nenhum conteúdo disponível nesta categoria ainda.</p>
             </div>
           )}
         </div>

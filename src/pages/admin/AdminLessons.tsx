@@ -35,6 +35,7 @@ interface Category {
   id: string;
   name: string;
   type: string;
+  parent_id: string | null;
 }
 
 interface Tool {
@@ -86,13 +87,29 @@ export default function AdminLessons() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select("id, name, type")
+        .select("id, name, type, parent_id")
         .order("type")
-        .order("name");
+        .order("order_index");
       if (error) throw error;
       return data as Category[];
     },
   });
+
+  // Separate main categories and subcategories
+  const mainCategories = categories?.filter(c => !c.parent_id) || [];
+  const getSubcategories = (parentId: string) => 
+    categories?.filter(c => c.parent_id === parentId) || [];
+
+  // Track selected main category for cascading select
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("");
+
+  // Get the main category from a subcategory or category
+  const getMainCategoryId = (categoryId: string): string => {
+    const cat = categories?.find(c => c.id === categoryId);
+    if (!cat) return "";
+    if (cat.parent_id) return cat.parent_id;
+    return categoryId;
+  };
 
   const { data: tools } = useQuery({
     queryKey: ["admin-tools-select"],
@@ -187,6 +204,7 @@ export default function AdminLessons() {
     setSelectedLinkId("");
     setVideoSource("url");
     setUploadProgress(0);
+    setSelectedMainCategory("");
   };
 
   const handleVideoUpload = async (file: File) => {
@@ -265,6 +283,11 @@ export default function AdminLessons() {
       } catch {
         relatedLinks = [];
       }
+    }
+    
+    // Set the main category for cascading select
+    if (lesson.category_id) {
+      setSelectedMainCategory(getMainCategoryId(lesson.category_id));
     }
     
     setFormData({
@@ -398,21 +421,70 @@ export default function AdminLessons() {
                 <div>
                   <label className="text-sm font-medium mb-1 block">Categoria</label>
                   <Select
-                    value={formData.category_id}
-                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    value={selectedMainCategory}
+                    onValueChange={(value) => {
+                      setSelectedMainCategory(value);
+                      // Check if the main category has subcategories
+                      const subs = getSubcategories(value);
+                      if (subs.length === 0) {
+                        // No subcategories, set the category directly
+                        setFormData({ ...formData, category_id: value });
+                      } else {
+                        // Has subcategories, clear the category_id to force selection
+                        setFormData({ ...formData, category_id: "" });
+                      }
+                    }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                      <SelectValue placeholder="Selecione a categoria..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((cat) => (
+                      {mainCategories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name} ({typeLabels[cat.type]})
+                          {cat.name} ({typeLabels[cat.type] || cat.type})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Subcategory select - only show if main category has subcategories */}
+                {selectedMainCategory && getSubcategories(selectedMainCategory).length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Subcategoria</label>
+                    <Select
+                      value={formData.category_id}
+                      onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a subcategoria..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getSubcategories(selectedMainCategory).map((sub) => (
+                          <SelectItem key={sub.id} value={sub.id}>
+                            {sub.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {/* Duration - move to next row if subcategory is shown */}
+                {!(selectedMainCategory && getSubcategories(selectedMainCategory).length > 0) && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Duração</label>
+                    <Input
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      placeholder="Ex: 15:30"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Duration in its own row when subcategory is shown */}
+              {selectedMainCategory && getSubcategories(selectedMainCategory).length > 0 && (
                 <div>
                   <label className="text-sm font-medium mb-1 block">Duração</label>
                   <Input
@@ -421,7 +493,7 @@ export default function AdminLessons() {
                     placeholder="Ex: 15:30"
                   />
                 </div>
-              </div>
+              )}
               <div className="space-y-3">
                 <label className="text-sm font-medium block">Vídeo da Aula</label>
                 

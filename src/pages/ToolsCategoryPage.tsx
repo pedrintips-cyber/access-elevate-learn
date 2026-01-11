@@ -1,4 +1,4 @@
-import { ArrowLeft, Wrench, Download, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, Wrench, Download, Copy, ExternalLink, ChevronRight, Folder } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ interface Category {
   id: string;
   name: string;
   description: string | null;
+  parent_id: string | null;
 }
 
 interface Tool {
@@ -28,6 +29,7 @@ const ToolsCategoryPage = () => {
   const { isVIP } = useAuth();
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,12 +42,14 @@ const ToolsCategoryPage = () => {
     const fetchData = async () => {
       if (!id) return;
 
-      const [categoryRes, toolsRes] = await Promise.all([
+      const [categoryRes, subcategoriesRes, toolsRes] = await Promise.all([
         supabase.from('categories').select('*').eq('id', id).maybeSingle(),
-        supabase.from('tools').select('*').eq('category_id', id).order('order_index'),
+        supabase.from('categories').select('*').eq('parent_id', id).order('order_index'),
+        supabase.from('tools').select('*').eq('category_id', id).eq('is_published', true).order('order_index'),
       ]);
 
       if (categoryRes.data) setCategory(categoryRes.data);
+      if (subcategoriesRes.data) setSubcategories(subcategoriesRes.data);
       if (toolsRes.data) setTools(toolsRes.data);
       setLoading(false);
     };
@@ -117,38 +121,85 @@ const ToolsCategoryPage = () => {
             </div>
           </motion.div>
 
-          {/* Tools List */}
-          {tools.length === 0 ? (
-            <div className="glass-card p-8 text-center">
-              <p className="text-muted-foreground">Nenhuma ferramenta disponível nesta categoria ainda.</p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {tools.map((tool, index) => (
-                <Link to={`/tools/${tool.id}`} key={tool.id}>
+          {/* Subcategories */}
+          {subcategories.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Subcategorias</h2>
+              <div className="grid gap-3">
+                {subcategories.map((sub, index) => (
                   <motion.div
+                    key={sub.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.08 }}
-                    className="glass-card p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                        {tool.type === "file" && <Download className="w-6 h-6 text-primary" />}
-                        {tool.type === "script" && <Copy className="w-6 h-6 text-primary" />}
-                        {tool.type === "link" && <ExternalLink className="w-6 h-6 text-primary" />}
+                    <Link
+                      to={`/tools/category/${sub.id}`}
+                      className="glass-card block p-4 group hover:border-primary/30 transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center flex-shrink-0">
+                          <Folder className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {sub.name}
+                          </h3>
+                          {sub.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {sub.description}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground mb-1">{tool.title}</h3>
-                        {tool.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{tool.description}</p>
-                        )}
-                      </div>
-                      <ArrowLeft className="w-5 h-5 text-muted-foreground rotate-180 flex-shrink-0" />
-                    </div>
+                    </Link>
                   </motion.div>
-                </Link>
-              ))}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tools List */}
+          {tools.length > 0 && (
+            <div>
+              {subcategories.length > 0 && (
+                <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Ferramentas</h2>
+              )}
+              <div className="grid gap-4">
+                {tools.map((tool, index) => (
+                  <Link to={`/tools/${tool.id}`} key={tool.id}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08 }}
+                      className="glass-card p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                          {tool.type === "file" && <Download className="w-6 h-6 text-primary" />}
+                          {tool.type === "script" && <Copy className="w-6 h-6 text-primary" />}
+                          {tool.type === "link" && <ExternalLink className="w-6 h-6 text-primary" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground mb-1">{tool.title}</h3>
+                          {tool.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">{tool.description}</p>
+                          )}
+                        </div>
+                        <ArrowLeft className="w-5 h-5 text-muted-foreground rotate-180 flex-shrink-0" />
+                      </div>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {subcategories.length === 0 && tools.length === 0 && (
+            <div className="glass-card p-8 text-center">
+              <p className="text-muted-foreground">Nenhum conteúdo disponível nesta categoria ainda.</p>
             </div>
           )}
         </div>
