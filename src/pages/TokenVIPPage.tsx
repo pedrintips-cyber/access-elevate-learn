@@ -31,58 +31,30 @@ const TokenVIPPage = () => {
     setIsLoading(true);
 
     try {
-      // Verificar se o token existe e está disponível
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("vip_tokens")
-        .select("*")
-        .eq("token", token.trim().toUpperCase())
-        .maybeSingle();
+      // Usar função segura do banco de dados para validar e usar o token
+      const { data: result, error: rpcError } = await supabase
+        .rpc('use_vip_token', {
+          token_input: token.trim().toUpperCase(),
+          user_id_input: user.id
+        });
 
-      if (tokenError) {
-        throw new Error("Erro ao verificar token");
+      if (rpcError) {
+        console.error("Erro RPC:", rpcError);
+        throw new Error("Erro ao processar token");
       }
 
-      if (!tokenData) {
-        toast.error("Token inválido ou não encontrado");
+      if (!result || result.length === 0) {
+        toast.error("Erro ao verificar token");
         setIsLoading(false);
         return;
       }
 
-      if (tokenData.is_used) {
-        toast.error("Este token já foi utilizado");
+      const { success, message } = result[0];
+
+      if (!success) {
+        toast.error(message || "Token inválido");
         setIsLoading(false);
         return;
-      }
-
-      // Marcar token como usado
-      const { error: updateTokenError } = await supabase
-        .from("vip_tokens")
-        .update({
-          is_used: true,
-          used_by: user.id,
-          used_at: new Date().toISOString(),
-        })
-        .eq("id", tokenData.id)
-        .eq("is_used", false); // Garante que não foi usado
-
-      if (updateTokenError) {
-        throw new Error("Erro ao usar token");
-      }
-
-      // Ativar VIP para o usuário (30 dias)
-      const vipExpiresAt = new Date();
-      vipExpiresAt.setDate(vipExpiresAt.getDate() + 30);
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          is_vip: true,
-          vip_expires_at: vipExpiresAt.toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (profileError) {
-        throw new Error("Erro ao ativar VIP");
       }
 
       setIsSuccess(true);
