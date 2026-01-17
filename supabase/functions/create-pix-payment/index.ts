@@ -81,9 +81,13 @@ serve(async (req) => {
         customer: {
           name: 'Cliente VIP',
           email: userEmail,
+          phone: {
+            ddd: '11',
+            number: '999999999'
+          },
           document: {
             type: 'cpf',
-            number: '00000000000' // Placeholder - HuraPay may not require real CPF
+            number: '00000000000'
           }
         },
         items: [
