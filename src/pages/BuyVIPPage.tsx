@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Crown, CreditCard, Check, Loader2, Copy, CheckCircle, ArrowLeft, Sparkles, Shield, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +32,6 @@ const BuyVIPPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [pixData, setPixData] = useState<{
     qrCode: string;
-    qrCodeImage: string;
     externalId: string;
   } | null>(null);
   const [earnedToken, setEarnedToken] = useState<string | null>(null);
@@ -69,7 +69,6 @@ const BuyVIPPage = () => {
 
       setPixData({
         qrCode: data.qr_code,
-        qrCodeImage: data.qr_code_image,
         externalId: data.external_id,
       });
 
@@ -310,13 +309,14 @@ const BuyVIPPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* QR Code Image */}
+                {/* QR Code - Generated from PIX code */}
                 <div className="flex justify-center">
                   <div className="p-4 bg-white rounded-xl">
-                    <img 
-                      src={pixData.qrCodeImage} 
-                      alt="QR Code PIX" 
-                      className="w-48 h-48"
+                    <QRCodeSVG 
+                      value={pixData.qrCode} 
+                      size={192}
+                      level="M"
+                      includeMargin={false}
                     />
                   </div>
                 </div>
@@ -328,11 +328,16 @@ const BuyVIPPage = () => {
                   </p>
                 </div>
 
-                {/* Copy Code */}
+                {/* PIX Code Display + Copy */}
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground text-center">
                     Ou copie o código PIX:
                   </p>
+                  <div className="bg-secondary/50 rounded-lg p-3 mb-2">
+                    <p className="font-mono text-xs break-all text-muted-foreground max-h-20 overflow-y-auto">
+                      {pixData.qrCode}
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
                     onClick={copyPixCode}
