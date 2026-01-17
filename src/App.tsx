@@ -14,6 +14,7 @@ import ToolsCategoryPage from "./pages/ToolsCategoryPage";
 import ToolDetailPage from "./pages/ToolDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import TokenVIPPage from "./pages/TokenVIPPage";
+import BuyVIPPage from "./pages/BuyVIPPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFound from "./pages/NotFound";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/token-vip" element={<TokenVIPPage />} />
+            <Route path="/buy-vip" element={<BuyVIPPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             {/* Settings/Profile Routes */}
