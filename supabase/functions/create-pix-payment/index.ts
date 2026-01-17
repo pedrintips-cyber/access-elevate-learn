@@ -117,13 +117,14 @@ serve(async (req) => {
 
     const huraData = JSON.parse(responseText);
 
-    // Extract PIX data from response
-    const transactionId = huraData.id || huraData.transaction_id;
-    const qrCode = huraData.pix?.qr_code || huraData.qr_code;
-    const qrCodeImage = huraData.pix?.qr_code_url || huraData.qr_code_url || huraData.pix?.qr_code_image;
+    // Extract PIX data from response - data is nested inside 'data' object
+    const paymentData = huraData.data || huraData;
+    const transactionId = paymentData.id || paymentData.transaction_id;
+    const qrCode = paymentData.pix?.qr_code || paymentData.qr_code;
 
     console.log('Transaction created:', transactionId);
     console.log('QR Code available:', !!qrCode);
+    console.log('QR Code:', qrCode);
 
     // Save transaction to database
     const { error: dbError } = await supabase.from('pix_transactions').insert({
@@ -135,7 +136,7 @@ serve(async (req) => {
       payer_email: userEmail,
       payer_document: '00000000000',
       qr_code: qrCode,
-      qr_code_image: qrCodeImage,
+      qr_code_image: null, // HuraPay doesn't provide image, QR is generated on frontend
       tribopay_id: transactionId, // Reusing this field for HuraPay ID
     });
 
@@ -149,7 +150,6 @@ serve(async (req) => {
         transaction_id: transactionId,
         external_id: externalId,
         qr_code: qrCode,
-        qr_code_image: qrCodeImage,
         amount: 250.00,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
