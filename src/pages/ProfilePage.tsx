@@ -1,4 +1,4 @@
-import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones, Copy, Clock, CheckCircle, Key } from "lucide-react";
+import { User, Crown, Settings, LogOut, ChevronRight, Bell, HelpCircle, Shield, Sparkles, MessageCircle, Headphones, Copy, Clock, CheckCircle, Key, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 
 const menuItems = [
+  { icon: CreditCard, label: "Comprar VIP", path: "/buy-vip", highlight: true },
   { icon: Key, label: "Token VIP", path: "/token-vip" },
   { icon: Bell, label: "Notificações", path: "/settings/notifications" },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/support" },
@@ -258,8 +259,8 @@ const ProfilePage = () => {
                         Desbloqueie todo o conteúdo
                       </p>
                     </div>
-                    <Link to="/vip" className="btn-vip text-sm px-4 py-2">
-                      Ver planos
+                    <Link to="/buy-vip" className="btn-vip text-sm px-4 py-2">
+                      Comprar
                     </Link>
                   </div>
                 </motion.div>
@@ -299,21 +300,34 @@ const ProfilePage = () => {
                 transition={{ delay: 0.2 }}
                 className="glass-card overflow-hidden mb-6"
               >
-                {menuItems.map((item, index) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-4 p-4 hover:bg-secondary/50 transition-colors ${
-                      index !== menuItems.length - 1 ? "border-b border-border/50" : ""
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-                      <item.icon className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <span className="flex-1 font-medium">{item.label}</span>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </Link>
-                ))}
+                {menuItems.map((item, index) => {
+                  // Esconder "Comprar VIP" se já for VIP
+                  if (item.path === "/buy-vip" && isVIP) return null;
+                  
+                  const isHighlight = 'highlight' in item && item.highlight;
+                  
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`flex items-center gap-4 p-4 hover:bg-secondary/50 transition-colors ${
+                        index !== menuItems.length - 1 ? "border-b border-border/50" : ""
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        isHighlight 
+                          ? "bg-gradient-to-br from-primary to-warning" 
+                          : "bg-secondary"
+                      }`}>
+                        <item.icon className={`w-5 h-5 ${isHighlight ? "text-background" : "text-muted-foreground"}`} />
+                      </div>
+                      <span className={`flex-1 font-medium ${isHighlight ? "text-primary" : ""}`}>
+                        {item.label}
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </Link>
+                  );
+                })}
               </motion.div>
 
               {/* Logout Button */}
