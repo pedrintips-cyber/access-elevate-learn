@@ -1,17 +1,23 @@
-import { Home, Crown, Wrench, Rss, User } from "lucide-react";
+import { Home, Crown, Wrench, Gem, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/" },
-  { icon: Crown, label: "VIP", path: "/vip" },
-  { icon: Wrench, label: "Tools", path: "/tools" },
-  { icon: Rss, label: "Feed", path: "/feed" },
-  { icon: User, label: "Perfil", path: "/profile" },
-];
+import { useAuth } from "@/hooks/useAuth";
 
 export const BottomNav = () => {
   const location = useLocation();
+  const { isVIP, user } = useAuth();
+
+  // Build nav items dynamically based on VIP status
+  const navItems = [
+    { icon: Home, label: "Home", path: "/" },
+    { icon: Crown, label: "VIP", path: "/vip" },
+    { icon: Wrench, label: "Tools", path: "/tools" },
+    // Show "Comprar VIP" instead of Feed for non-VIP users
+    isVIP 
+      ? { icon: Crown, label: "Feed", path: "/feed" }
+      : { icon: Gem, label: "Comprar", path: "/comprar-vip", isHighlight: true },
+    { icon: User, label: "Perfil", path: "/profile" },
+  ];
 
   return (
     <nav className="bottom-nav z-50 md:hidden">
@@ -19,6 +25,7 @@ export const BottomNav = () => {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
+          const isHighlight = 'isHighlight' in item && item.isHighlight;
 
           return (
             <Link
@@ -29,18 +36,26 @@ export const BottomNav = () => {
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 bg-primary/10 rounded-xl"
+                  className={`absolute inset-0 rounded-xl ${isHighlight ? 'bg-primary/20' : 'bg-primary/10'}`}
                   transition={{ type: "spring", duration: 0.5 }}
                 />
               )}
               <Icon
                 className={`w-5 h-5 transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isHighlight 
+                    ? "text-primary" 
+                    : isActive 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
                 }`}
               />
               <span
                 className={`text-xs font-medium transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isHighlight 
+                    ? "text-primary" 
+                    : isActive 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
                 }`}
               >
                 {item.label}
