@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/token-vip" element={<TokenVIPPage />} />
             <Route path="/buy-vip" element={<BuyVIPPage />} />
+            <Route path="/comprar-vip" element={<BuyVIPPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             {/* Settings/Profile Routes */}
