@@ -1,9 +1,11 @@
-import { Crown, Users, Zap, ArrowRight, MessageCircle, Headphones, Star, Shield, Sparkles } from "lucide-react";
+import { Crown, Users, Zap, ArrowRight, MessageCircle, Headphones, Star, Shield, Sparkles, Gem } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const networkBenefits = [
   { icon: Users, text: "Networking com empreendedores de elite" },
@@ -14,6 +16,8 @@ const networkBenefits = [
 ];
 
 const Home = () => {
+  const { isVIP } = useAuth();
+  
   const { data: settings } = useQuery({
     queryKey: ["site-settings-home"],
     queryFn: async () => {
@@ -137,11 +141,28 @@ const Home = () => {
                 </motion.a>
               </motion.div>
 
+              {/* Buy VIP CTA - Only show for non-VIP users */}
+              {!isVIP && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mb-8"
+                >
+                  <Link to="/comprar-vip">
+                    <Button variant="vip" size="lg" className="gap-2 text-base px-8">
+                      <Gem className="w-5 h-5" />
+                      Adquirir VIP Agora
+                    </Button>
+                  </Link>
+                </motion.div>
+              )}
+
               {/* Stats */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
                 className="grid grid-cols-3 gap-3 max-w-sm mx-auto"
               >
                 <div className="glass-card p-4 text-center border border-border/50">
@@ -198,6 +219,38 @@ const Home = () => {
           </motion.div>
         </section>
 
+        {/* Buy VIP Section - Only for non-VIP */}
+        {!isVIP && (
+          <section className="content-container py-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="glass-card p-8 text-center relative overflow-hidden border border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px]" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-warning/20 rounded-full blur-[50px]" />
+              <div className="relative z-10">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-warning flex items-center justify-center shadow-lg shadow-primary/40">
+                  <Gem className="w-8 h-8 text-background" />
+                </div>
+                <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
+                  Desbloqueie o <span className="gradient-text-vip">Acesso VIP</span>
+                </h2>
+                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  Tenha acesso a conteúdos exclusivos, ferramentas premium e muito mais.
+                </p>
+                <Link to="/comprar-vip">
+                  <Button variant="vip" size="lg" className="gap-2">
+                    <Gem className="w-5 h-5" />
+                    Adquirir VIP - R$ 250
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          </section>
+        )}
+
         {/* CTA Section */}
         <section className="content-container py-8 pb-10">
           <motion.div
@@ -213,7 +266,7 @@ const Home = () => {
                 Pronto para entrar na <span className="text-primary">Alta Cúpula</span>?
               </h2>
               <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                Escolha um dos grupos acima e faça parte do network que vai transformar seus resultados.
+                Escolha um dos grupos e faça parte do network que vai transformar seus resultados.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <motion.a
