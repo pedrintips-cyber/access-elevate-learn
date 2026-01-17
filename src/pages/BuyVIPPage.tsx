@@ -32,7 +32,7 @@ const BuyVIPPage = () => {
   const [pixData, setPixData] = useState<{
     qrCode: string;
     qrCodeImage: string;
-    transactionId: string;
+    externalId: string;
   } | null>(null);
   const [earnedToken, setEarnedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -49,12 +49,7 @@ const BuyVIPPage = () => {
 
     try {
       // Chamar edge function para gerar PIX
-      const { data, error } = await supabase.functions.invoke('create-pix-payment', {
-        body: {
-          amount: VIP_PRICE,
-          userId: user.id,
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('create-pix-payment');
 
       if (error) {
         console.error("Erro ao criar pagamento:", error);
@@ -64,14 +59,22 @@ const BuyVIPPage = () => {
         return;
       }
 
+      if (!data.success) {
+        console.error("Erro na resposta:", data.error);
+        toast.error(data.error || "Erro ao gerar pagamento PIX");
+        setIsPaymentModalOpen(false);
+        setIsLoading(false);
+        return;
+      }
+
       setPixData({
-        qrCode: data.qrCode,
-        qrCodeImage: data.qrCodeImage,
-        transactionId: data.transactionId,
+        qrCode: data.qr_code,
+        qrCodeImage: data.qr_code_image,
+        externalId: data.external_id,
       });
 
-      // Simular verificação de pagamento (polling)
-      pollPaymentStatus(data.transactionId);
+      // Iniciar verificação de pagamento (polling)
+      pollPaymentStatus(data.external_id);
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao processar pagamento");
@@ -81,7 +84,7 @@ const BuyVIPPage = () => {
     }
   };
 
-  const pollPaymentStatus = async (transactionId: string) => {
+  const pollPaymentStatus = async (externalId: string) => {
     // Poll a cada 5 segundos por até 10 minutos
     const maxAttempts = 120;
     let attempts = 0;
@@ -89,22 +92,24 @@ const BuyVIPPage = () => {
     const checkStatus = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('check-pix-payment', {
-          body: { transactionId }
+          body: { external_id: externalId }
         });
 
         if (error) {
           console.error("Erro ao verificar pagamento:", error);
+          attempts++;
+          if (attempts < maxAttempts) {
+            setTimeout(checkStatus, 5000);
+          }
           return;
         }
 
-        if (data.status === 'paid') {
-          // Pagamento confirmado - buscar token disponível
-          const token = await assignTokenToUser();
-          if (token) {
-            setEarnedToken(token);
-            setIsPaymentModalOpen(false);
-            setIsSuccessModalOpen(true);
-          }
+        if (data.status === 'approved') {
+          // Pagamento confirmado - token já foi atribuído pelo backend
+          setEarnedToken(data.token);
+          setIsPaymentModalOpen(false);
+          setIsSuccessModalOpen(true);
+          await refreshProfile();
           return;
         }
 
@@ -114,34 +119,17 @@ const BuyVIPPage = () => {
         }
       } catch (error) {
         console.error("Erro no polling:", error);
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(checkStatus, 5000);
+        }
       }
     };
 
     setTimeout(checkStatus, 5000);
   };
 
-  const assignTokenToUser = async (): Promise<string | null> => {
-    try {
-      // Buscar um token disponível
-      const { data: availableToken, error: fetchError } = await supabase
-        .from('vip_tokens')
-        .select('*')
-        .eq('is_used', false)
-        .limit(1)
-        .single();
-
-      if (fetchError || !availableToken) {
-        toast.error("Nenhum token disponível. Entre em contato com o suporte.");
-        return null;
-      }
-
-      return availableToken.token;
-    } catch (error) {
-      console.error("Erro ao atribuir token:", error);
-      toast.error("Erro ao processar token");
-      return null;
-    }
-  };
+  // Token é atribuído automaticamente pelo backend após confirmação do pagamento
 
   const copyToken = () => {
     if (earnedToken) {
