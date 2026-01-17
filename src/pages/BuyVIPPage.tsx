@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Crown, CreditCard, Check, Loader2, Copy, CheckCircle, ArrowLeft, Sparkles, Shield, Zap } from "lucide-react";
+import { Crown, CreditCard, Loader2, Copy, CheckCircle, ArrowLeft, Sparkles, Shield, Zap, Video, MessageCircle, Headphones, Users, Wrench, RefreshCw, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
@@ -18,11 +18,19 @@ import {
 const VIP_PRICE = 250; // R$ 250,00
 
 const benefits = [
-  { icon: Crown, text: "Acesso a todo conteúdo exclusivo" },
-  { icon: Zap, text: "Atualizações em primeira mão" },
-  { icon: Shield, text: "Suporte prioritário" },
-  { icon: Sparkles, text: "30 dias de acesso VIP" },
+  { icon: Video, text: "2 calls em grupo no Discord por semana" },
+  { icon: Users, text: "1 call privativa semanal (1:1) para suas dúvidas" },
+  { icon: MessageCircle, text: "Acesso ao grupo VIP do WhatsApp" },
+  { icon: Headphones, text: "Acesso ao grupo VIP do Discord" },
+  { icon: Crown, text: "Todas as aulas exclusivas do site VIP" },
+  { icon: Wrench, text: "Scripts, ferramentas e sistemas atualizados" },
+  { icon: Zap, text: "Network 24h no Discord - calls ilimitadas" },
+  { icon: RefreshCw, text: "Todas as atualizações e novos sistemas" },
 ];
+
+// Links dos grupos gratuitos
+const FREE_WHATSAPP_GROUP = "https://chat.whatsapp.com/EyVTBt8LCon0DQXy84QpY0";
+const FREE_DISCORD_GROUP = "https://discord.gg/ZMsvzxyGvf";
 
 const BuyVIPPage = () => {
   const { user, isVIP, refreshProfile } = useAuth();
@@ -275,7 +283,7 @@ const BuyVIPPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-center"
+            className="text-center mb-8"
           >
             <p className="text-sm text-muted-foreground mb-2">
               Já possui um token VIP?
@@ -287,6 +295,51 @@ const BuyVIPPage = () => {
             >
               Ativar Token
             </Button>
+          </motion.div>
+
+          {/* Free Network Groups */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-card p-6 border border-border/50"
+          >
+            <h3 className="font-display text-lg font-bold text-center mb-4">
+              Grupos <span className="text-primary">Gratuitos</span> de Network
+            </h3>
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              Enquanto decide, entre nos nossos grupos gratuitos!
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <a
+                href={FREE_WHATSAPP_GROUP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-500/10 border border-green-500/30 hover:border-green-500/50 transition-all"
+              >
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs font-medium">WhatsApp Free</span>
+                <span className="text-[10px] text-green-500 flex items-center gap-1">
+                  Entrar <ArrowRight className="w-3 h-3" />
+                </span>
+              </a>
+              <a
+                href={FREE_DISCORD_GROUP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 hover:border-indigo-500/50 transition-all"
+              >
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <Headphones className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs font-medium">Discord Free</span>
+                <span className="text-[10px] text-indigo-500 flex items-center gap-1">
+                  Entrar <ArrowRight className="w-3 h-3" />
+                </span>
+              </a>
+            </div>
           </motion.div>
         </div>
       </div>

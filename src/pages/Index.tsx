@@ -7,6 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
+// Links dos grupos gratuitos
+const FREE_WHATSAPP_GROUP = "https://chat.whatsapp.com/EyVTBt8LCon0DQXy84QpY0";
+const FREE_DISCORD_GROUP = "https://discord.gg/ZMsvzxyGvf";
+
 const networkBenefits = [
   { icon: Users, text: "Networking com empreendedores de elite" },
   { icon: Zap, text: "Scripts e estratégias exclusivas" },
@@ -88,57 +92,63 @@ const Home = () => {
               </motion.p>
 
               {/* Network Groups */}
+              {/* Network Groups - Free */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto mb-8"
+                className="mb-8"
               >
-                {/* WhatsApp Group */}
-                <motion.a
-                  href={settings?.whatsapp_link || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="glass-card p-5 flex flex-col items-center gap-3 group cursor-pointer border border-green-500/30 hover:border-green-500/50 transition-all bg-gradient-to-br from-green-500/5 to-transparent"
-                >
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
-                    <MessageCircle className="w-7 h-7 text-white" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-bold text-base text-foreground mb-1">
-                      WhatsApp VIP
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Grupo exclusivo</p>
-                  </div>
-                  <span className="text-xs font-medium text-green-500 flex items-center gap-1">
-                    Entrar agora <ArrowRight className="w-3 h-3" />
-                  </span>
-                </motion.a>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Entre nos grupos <span className="text-primary font-semibold">gratuitos</span> de Network:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
+                  {/* WhatsApp Group */}
+                  <motion.a
+                    href={FREE_WHATSAPP_GROUP}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="glass-card p-5 flex flex-col items-center gap-3 group cursor-pointer border border-green-500/30 hover:border-green-500/50 transition-all bg-gradient-to-br from-green-500/5 to-transparent"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                      <MessageCircle className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-bold text-base text-foreground mb-1">
+                        WhatsApp
+                      </h3>
+                      <p className="text-xs text-muted-foreground">Network gratuito</p>
+                    </div>
+                    <span className="text-xs font-medium text-green-500 flex items-center gap-1">
+                      Entrar agora <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </motion.a>
 
-                {/* Discord Group */}
-                <motion.a
-                  href={settings?.discord_link || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="glass-card p-5 flex flex-col items-center gap-3 group cursor-pointer border border-indigo-500/30 hover:border-indigo-500/50 transition-all bg-gradient-to-br from-indigo-500/5 to-transparent"
-                >
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <Headphones className="w-7 h-7 text-white" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-bold text-base text-foreground mb-1">
-                      Discord VIP
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Comunidade ativa</p>
-                  </div>
-                  <span className="text-xs font-medium text-indigo-500 flex items-center gap-1">
-                    Entrar agora <ArrowRight className="w-3 h-3" />
-                  </span>
-                </motion.a>
+                  {/* Discord Group */}
+                  <motion.a
+                    href={FREE_DISCORD_GROUP}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="glass-card p-5 flex flex-col items-center gap-3 group cursor-pointer border border-indigo-500/30 hover:border-indigo-500/50 transition-all bg-gradient-to-br from-indigo-500/5 to-transparent"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                      <Headphones className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-bold text-base text-foreground mb-1">
+                        Discord
+                      </h3>
+                      <p className="text-xs text-muted-foreground">Comunidade ativa</p>
+                    </div>
+                    <span className="text-xs font-medium text-indigo-500 flex items-center gap-1">
+                      Entrar agora <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </motion.a>
+                </div>
               </motion.div>
 
               {/* Buy VIP CTA - Only show for non-VIP users */}
@@ -237,8 +247,8 @@ const Home = () => {
                 <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
                   Desbloqueie o <span className="gradient-text-vip">Acesso VIP</span>
                 </h2>
-                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                  Tenha acesso a conteúdos exclusivos, ferramentas premium e muito mais.
+                <p className="text-muted-foreground mb-4 max-w-sm mx-auto text-sm">
+                  Calls em grupo, call privativa semanal, grupos VIP, aulas exclusivas, scripts, ferramentas e network 24h.
                 </p>
                 <Link to="/comprar-vip">
                   <Button variant="vip" size="lg" className="gap-2">
@@ -270,7 +280,7 @@ const Home = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <motion.a
-                  href={settings?.whatsapp_link || "#"}
+                  href={FREE_WHATSAPP_GROUP}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
@@ -281,7 +291,7 @@ const Home = () => {
                   Entrar no WhatsApp
                 </motion.a>
                 <motion.a
-                  href={settings?.discord_link || "#"}
+                  href={FREE_DISCORD_GROUP}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
