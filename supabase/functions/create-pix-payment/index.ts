@@ -81,10 +81,7 @@ serve(async (req) => {
         customer: {
           name: 'Cliente VIP',
           email: userEmail,
-          phone: {
-            ddd: '11',
-            number: '999999999'
-          },
+          phone: '11999999999',
           document: {
             type: 'cpf',
             number: '00000000000'
